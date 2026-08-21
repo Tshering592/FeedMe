@@ -173,11 +173,13 @@ namespace FeedMe.Data
             // 5. Seed time slots
             if (!context.TimeSlots.Any())
             {
-                var now = DateTime.UtcNow.Date;
+                // Use a fixed future reference date so slots don't expire on first run.
+                // Admin can delete/replace these with real slots via the Slots management page.
+                var futureBase = new DateTime(2099, 1, 1, 0, 0, 0, DateTimeKind.Utc);
                 context.TimeSlots.AddRange(
-                    new TimeSlot { StartTime = now.AddHours(10), EndTime = now.AddHours(10).AddMinutes(30), MaxOrders = 20, IsActive = true },
-                    new TimeSlot { StartTime = now.AddHours(11), EndTime = now.AddHours(11).AddMinutes(30), MaxOrders = 20, IsActive = true },
-                    new TimeSlot { StartTime = now.AddHours(12), EndTime = now.AddHours(12).AddMinutes(30), MaxOrders = 20, IsActive = true }
+                    new TimeSlot { StartTime = futureBase.AddHours(10), EndTime = futureBase.AddHours(10).AddMinutes(30), MaxOrders = 20, IsActive = true },
+                    new TimeSlot { StartTime = futureBase.AddHours(11), EndTime = futureBase.AddHours(11).AddMinutes(30), MaxOrders = 20, IsActive = true },
+                    new TimeSlot { StartTime = futureBase.AddHours(12), EndTime = futureBase.AddHours(12).AddMinutes(30), MaxOrders = 20, IsActive = true }
                 );
                 await context.SaveChangesAsync();
             }

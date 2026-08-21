@@ -6,8 +6,11 @@
     <title>@ViewData["Title"] - FeedMe</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @if (!Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.Equals("Development", StringComparison.OrdinalIgnoreCase) ?? true)
+    {
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    }
     <link rel="stylesheet" href="~/css/canteen-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
@@ -41,6 +44,7 @@
                 <!-- Collapsible Navigation Content -->
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between align-items-center mt-2 mt-sm-0">
 
+                    <ul class="navbar-nav me-auto">
 
                         <!-- Admin Specific Links -->
                         @if (User.IsInRole("Admin"))
