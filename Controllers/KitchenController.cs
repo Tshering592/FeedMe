@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,17 +21,20 @@ namespace FeedMe.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly INotificationService _notificationService;
         private readonly IOrderService _orderService;
+        private readonly ILogger<KitchenController> _logger;
 
         public KitchenController(
             ApplicationDbContext context,
             UserManager<AppUser> userManager,
             INotificationService notificationService,
-            IOrderService orderService)
+            IOrderService orderService,
+            ILogger<KitchenController> logger)
         {
             _context = context;
             _userManager = userManager;
             _notificationService = notificationService;
             _orderService = orderService;
+            _logger = logger;
         }
 
         // GET: /Kitchen/Dashboard?filter=all
@@ -38,7 +42,7 @@ namespace FeedMe.Controllers
         public async Task<IActionResult> Dashboard(string filter = "all")
         {
             var userId = _userManager.GetUserId(User);
-            var today = DateTime.Today;  
+            var today = DateTime.Today;
 
             var ordersToday = await _context.Orders
                 .Where(o => o.OrderTime.Date == today)
@@ -107,25 +111,37 @@ namespace FeedMe.Controllers
 
             bool isSuccess;
 
-            // Handle workflow routing through OrderService methods
-            if (status == OrderStatus.Accepted)
+            try
             {
-                var estReadyTime = DateTime.UtcNow.AddMinutes(estimatedMinutes);
-                isSuccess = await _orderService.AcceptOrderAsync(orderId, estReadyTime);
+                // Handle workflow routing through OrderService methods
+                if (status == OrderStatus.Accepted)
+                {
+                    var estReadyTime = DateTime.UtcNow.AddMinutes(estimatedMinutes);
+                    isSuccess = await _orderService.AcceptOrderAsync(orderId, estReadyTime);
+                }
+                else if (status == OrderStatus.Rejected)
+                {
+                    string rejectReason = string.IsNullOrWhiteSpace(reason) ? "Rejected by Kitchen Staff" : reason;
+                    isSuccess = await _orderService.RejectOrderAsync(orderId, rejectReason);
+                }
+                else if (status == OrderStatus.Cancelled)
+                {
+                    string cancelReason = string.IsNullOrWhiteSpace(reason) ? "Cancelled by Kitchen Staff" : reason;
+                    isSuccess = await _orderService.AdminCancelOrderAsync(orderId, cancelReason, cancelledBy: "Kitchen Staff");
+                }
+                else
+                {
+                    isSuccess = await _orderService.UpdateOrderStatusAsync(orderId, status);
+                }
             }
-            else if (status == OrderStatus.Rejected)
+            catch (Exception ex)
             {
-                string rejectReason = string.IsNullOrWhiteSpace(reason) ? "Rejected by Kitchen Staff" : reason;
-                isSuccess = await _orderService.RejectOrderAsync(orderId, rejectReason);
-            }
-            else if (status == OrderStatus.Cancelled)
-            {
-                string cancelReason = string.IsNullOrWhiteSpace(reason) ? "Cancelled by Kitchen Staff" : reason;
-                isSuccess = await _orderService.AdminCancelOrderAsync(orderId, cancelReason);
-            }
-            else
-            {
-                isSuccess = await _orderService.UpdateOrderStatusAsync(orderId, status);
+                // Even if something unexpected happens (e.g. while notifying the student),
+                // the underlying refund/stock/status change may have already been committed.
+                // Never let this surface as a raw error page - log it and tell the staff clearly.
+                _logger.LogError(ex, "Error updating Order #{OrderId} to {Status} from Kitchen.", orderId, status);
+                TempData["Error"] = $"Order #{order.Id:D3} may have been updated, but an error occurred while notifying the student. Please verify the order status.";
+                return RedirectToAction(nameof(Dashboard));
             }
 
             if (!isSuccess)

@@ -2,6 +2,7 @@
 using FeedMe.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,28 +14,50 @@ namespace FeedMe.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(ApplicationDbContext context, UserManager<AppUser> userManager)
+        public NotificationService(ApplicationDbContext context, UserManager<AppUser> userManager, ILogger<NotificationService> logger)
         {
             _context = context;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // Send a notification to a specific user
-        public async Task CreateNotificationAsync(string userId, string message, string type, int? orderId = null)
+        // IMPORTANT: this must never throw. A notification failing to save should never
+        // take down the calling action (e.g. an order cancellation) after the "real"
+        // work (refund, stock restore, status change) has already been committed.
+        public async Task CreateNotificationAsync(string userId, string message, string type, int? orderId = null, string? title = null)
         {
-            var notification = new Notification
+            if (string.IsNullOrWhiteSpace(userId))
             {
-                UserId = userId,
-                Message = message,
-                Type = type,
-                OrderId = orderId,
-                IsRead = false,
-                CreatedAt = DateTime.Now
-            };
+                _logger.LogWarning("Skipped creating notification (Type={Type}, OrderId={OrderId}) because userId was empty.", type, orderId);
+                return;
+            }
 
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
+            try
+            {
+                var notification = new Notification
+                {
+                    UserId = userId,
+                    Title = title ?? string.Empty,
+                    Message = message,
+                    Type = type,
+                    OrderId = orderId,
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Swallow and log rather than letting a notification failure bubble up
+                // and abort the caller's action (this was the root cause of kitchen-side
+                // cancellations refunding tokens but never notifying the student).
+                _logger.LogError(ex, "Failed to create notification for user {UserId}, order {OrderId}.", userId, orderId);
+            }
         }
 
         // Send a notification to all users in both "Staff" and "Admin" roles

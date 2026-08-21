@@ -1,6 +1,7 @@
 ﻿using FeedMe.Data;
 using FeedMe.Hubs;
 using FeedMe.Models;
+using FeedMe.Services;
 using FeedMe.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,17 +27,23 @@ namespace FeedMe.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IHubContext<OrderHub> _hubContext;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IOrderService _orderService;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             ApplicationDbContext context,
             IWebHostEnvironment webHostEnvironment,
             IHubContext<OrderHub> hubContext,
-            UserManager<AppUser> userManager)
+            UserManager<AppUser> userManager,
+            IOrderService orderService,
+            ILogger<AdminController> logger)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _hubContext = hubContext;
             _userManager = userManager;
+            _orderService = orderService;
+            _logger = logger;
         }
 
         // 1. GET: /Admin/Dashboard
@@ -377,53 +385,51 @@ namespace FeedMe.Controllers
 
                     if (parsedStatus == OrderStatus.Cancelled && previousStatus != OrderStatus.Cancelled)
                     {
-                        var adminUser = await _userManager.GetUserAsync(User);
-                        var studentUser = order.Student ?? (order.StudentId != null ? await _userManager.FindByIdAsync(order.StudentId) : null);
+                        // Route through the SAME shared cancellation logic used by Kitchen, so refunds,
+                        // stock restoration, and the student notification always happen consistently
+                        // regardless of which role cancelled the order.
+                        string cancelReason = !string.IsNullOrWhiteSpace(adminMessage) ? adminMessage : "Cancelled by Admin";
 
-                        if (adminUser != null)
+                        bool cancelled;
+                        try
                         {
-                            adminUser.TokenBalance -= order.TotalAmount;
-                            await _userManager.UpdateAsync(adminUser);
+                            cancelled = await _orderService.AdminCancelOrderAsync(orderId, cancelReason, cancelledBy: "Admin");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error cancelling Order #{OrderId} from Admin.", orderId);
+                            TempData["Error"] = $"Order #{order.Id:D3} may have been updated, but an error occurred while notifying the student. Please verify the order status.";
+                            return RedirectToAction(nameof(Orders));
                         }
 
-                        if (studentUser != null)
+                        if (!cancelled)
                         {
-                            studentUser.TokenBalance += order.TotalAmount;
-                            await _userManager.UpdateAsync(studentUser);
+                            TempData["Error"] = $"Unable to cancel Order #{order.Id:D3}. Check current order status.";
+                            return RedirectToAction(nameof(Orders));
                         }
 
-                        if (order.OrderItems != null)
+                        // Re-fetch so we broadcast the up-to-date AdminMessage/status set by OrderService.
+                        order = await _context.Orders
+                            .Include(o => o.Student)
+                            .Include(o => o.OrderItems)
+                            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                        if (order == null)
                         {
-                            foreach (var item in order.OrderItems)
-                            {
-                                var menuItem = await _context.MenuItems.FindAsync(item.MenuItemId);
-                                if (menuItem != null && menuItem.StockQuantity.HasValue)
-                                {
-                                    menuItem.StockQuantity += item.Quantity;
-                                }
-                            }
+                            TempData["Success"] = $"Order #{orderId:D3} status updated to '{status}' and notification sent!";
+                            return RedirectToAction(nameof(Orders));
                         }
-
-                        var refundTx = new TokenTransaction
-                        {
-                            SenderUserId = adminUser?.Id,
-                            SenderName = adminUser?.FullName ?? "Admin Vault",
-                            ReceiverUserId = studentUser?.Id,
-                            ReceiverName = studentUser?.FullName ?? order.StudentName ?? "User",
-                            Amount = order.TotalAmount,
-                            Type = TransactionType.TopUp,
-                            Description = $"Refund for cancelled Order #{order.Id:D3}",
-                            Timestamp = DateTime.Now
-                        };
-
-                        _context.TokenTransactions.Add(refundTx);
                     }
-
-                    order.Status = parsedStatus;
+                    else
+                    {
+                        order.Status = parsedStatus;
+                    }
                 }
 
                 string defaultMsg = $"Your order #{order.Id:D3} is now {order.Status}.";
-                string messageToSend = !string.IsNullOrWhiteSpace(adminMessage) ? adminMessage : defaultMsg;
+                string messageToSend = !string.IsNullOrWhiteSpace(order.AdminMessage)
+                    ? order.AdminMessage
+                    : (!string.IsNullOrWhiteSpace(adminMessage) ? adminMessage : defaultMsg);
                 order.AdminMessage = messageToSend;
 
                 await _context.SaveChangesAsync();
@@ -444,22 +450,31 @@ namespace FeedMe.Controllers
                     await _hubContext.Clients.User(targetUserId).SendAsync("ReceiveOrderStatusUpdate", notificationData);
                     await _hubContext.Clients.Group($"order_{order.Id}").SendAsync("ReceiveOrderStatusUpdate", notificationData);
 
-                    try
+                    // Only create the generic DB notification here for NON-cancellation updates.
+                    // Cancellations already had their notification (with refund confirmation) created
+                    // by OrderService.AdminCancelOrderAsync above - creating a second one here would
+                    // duplicate it.
+                    if (order.Status != OrderStatus.Cancelled)
                     {
-                        var dbNotification = new Notification
+                        try
                         {
-                            UserId = targetUserId,
-                            Title = $"Order #{order.Id:D3} - {order.Status}",
-                            Message = messageToSend,
-                            CreatedAt = DateTime.Now,
-                            IsRead = false
-                        };
-                        _context.Notifications.Add(dbNotification);
-                        await _context.SaveChangesAsync();
-                    }
-                    catch
-                    {
-                        // Ignore if Notification table schema differs
+                            var dbNotification = new Notification
+                            {
+                                UserId = targetUserId,
+                                Title = $"Order #{order.Id:D3} - {order.Status}",
+                                Message = messageToSend,
+                                CreatedAt = DateTime.Now,
+                                IsRead = false
+                            };
+                            _context.Notifications.Add(dbNotification);
+                            await _context.SaveChangesAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log rather than silently ignoring - schema mismatches or FK issues
+                            // should be visible, not hidden.
+                            _logger.LogError(ex, "Failed to create DB notification for Order #{OrderId}.", order.Id);
+                        }
                     }
                 }
 

@@ -95,7 +95,7 @@ namespace FeedMe.Services
                 Amount = total,
                 Type = TransactionType.Purchase,
                 Description = $"Meal Payment for Order #{order.Id:D3}",
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.Now
             };
             _context.TokenTransactions.Add(purchaseTransaction);
             await _context.SaveChangesAsync();
@@ -189,7 +189,8 @@ namespace FeedMe.Services
                 order.StudentId,
                 $"Your order #{order.Id:D3} has been accepted. Estimated ready at {estimatedReadyTime.ToLocalTime():hh:mm tt}.",
                 "OrderStatus",
-                order.Id
+                order.Id,
+                title: $"Order #{order.Id:D3} - Accepted"
             );
             return true;
         }
@@ -201,17 +202,21 @@ namespace FeedMe.Services
                 return false;
 
             RestoreOrderStock(order);
-            RefundTokensToStudent(order, $"Refund for rejected Order #{order.Id:D3}");
+            await RefundTokensToStudent(order, $"Refund for rejected Order #{order.Id:D3}");
+
+            string rejectMessage = $"Your order #{order.Id:D3} was rejected. Reason: {reason}. Tokens have been refunded.";
 
             order.Status = OrderStatus.Rejected;
             order.StaffNotes = reason;
+            order.AdminMessage = rejectMessage;
             await _context.SaveChangesAsync();
 
             await _notificationService.CreateNotificationAsync(
                 order.StudentId,
-                $"Your order #{order.Id:D3} was rejected. Reason: {reason}. Tokens have been refunded.",
+                rejectMessage,
                 "OrderStatus",
-                order.Id
+                order.Id,
+                title: $"Order #{order.Id:D3} - Rejected"
             );
             return true;
         }
@@ -231,7 +236,8 @@ namespace FeedMe.Services
                 order.StudentId,
                 $"Your order #{order.Id:D3} is now {newStatus}.",
                 "OrderStatus",
-                order.Id
+                order.Id,
+                title: $"Order #{order.Id:D3} - {newStatus}"
             );
             return true;
         }
@@ -243,38 +249,49 @@ namespace FeedMe.Services
                 return false;
 
             RestoreOrderStock(order);
-            RefundTokensToStudent(order, $"Refund for cancelled Order #{order.Id:D3}");
+            await RefundTokensToStudent(order, $"Refund for cancelled Order #{order.Id:D3}");
+
+            string selfCancelMessage = $"Your order #{order.Id:D3} has been cancelled. Tokens have been refunded.";
 
             order.Status = OrderStatus.Cancelled;
+            order.AdminMessage = selfCancelMessage;
             await _context.SaveChangesAsync();
 
             await _notificationService.CreateNotificationAsync(
                 studentId,
-                $"Your order #{order.Id:D3} has been cancelled. Tokens have been refunded.",
+                selfCancelMessage,
                 "OrderStatus",
-                order.Id
+                order.Id,
+                title: $"Order #{order.Id:D3} - Cancelled"
             );
             return true;
         }
 
-        public async Task<bool> AdminCancelOrderAsync(int orderId, string reason)
+        // Single shared cancellation path used by BOTH Admin and Kitchen.
+        // "cancelledBy" identifies who performed the cancellation (e.g. "Admin", "Kitchen Staff")
+        // so the student-facing message and the AdminMessage field are accurate for either caller.
+        public async Task<bool> AdminCancelOrderAsync(int orderId, string reason, string cancelledBy = "Admin")
         {
             var order = await GetOrderByIdAsync(orderId);
             if (order == null || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Rejected || order.Status == OrderStatus.Collected)
                 return false;
 
             RestoreOrderStock(order);
-            RefundTokensToStudent(order, $"Refund for cancelled Order #{order.Id:D3}");
+            await RefundTokensToStudent(order, $"Refund for cancelled Order #{order.Id:D3}");
+
+            string studentMessage = $"Your order #{order.Id:D3} was cancelled by {cancelledBy}. Reason: {reason}. Tokens have been refunded.";
 
             order.Status = OrderStatus.Cancelled;
-            order.StaffNotes = $"Cancelled by Admin: {reason}";
+            order.StaffNotes = $"Cancelled by {cancelledBy}: {reason}";
+            order.AdminMessage = studentMessage;
             await _context.SaveChangesAsync();
 
             await _notificationService.CreateNotificationAsync(
                 order.StudentId,
-                $"Your order #{order.Id:D3} was cancelled by Admin. Reason: {reason}. Tokens have been refunded.",
+                studentMessage,
                 "OrderStatus",
-                order.Id
+                order.Id,
+                title: $"Order #{order.Id:D3} - Cancelled"
             );
             return true;
         }
@@ -305,22 +322,37 @@ namespace FeedMe.Services
             }
         }
 
-        private void RefundTokensToStudent(Order order, string description)
+        // Refunds a cancelled/rejected order's tokens back to the student, funded FROM the
+        // Admin Central Vault (the same pool TopUps are debited from). Previously this only
+        // credited the student without debiting any vault, so refunds looked like tokens
+        // appearing out of nowhere instead of the vault paying the student back.
+        private async Task RefundTokensToStudent(Order order, string description)
         {
             if (order?.Student != null && order.TotalAmount > 0)
             {
                 order.Student.TokenBalance += (int)order.TotalAmount;
 
+                // The "Admin Central Vault" is the AppUser in the Admin role - the same
+                // account TopUps/deposits already use as the shared vault balance.
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                var vaultUser = adminUsers.FirstOrDefault();
+
+                if (vaultUser != null)
+                {
+                    vaultUser.TokenBalance -= order.TotalAmount;
+                    await _userManager.UpdateAsync(vaultUser);
+                }
+
                 var transaction = new TokenTransaction
                 {
-                    SenderUserId = "SYSTEM",
+                    SenderUserId = vaultUser?.Id ?? "SYSTEM",
                     SenderName = "TCMIT Canteen",
                     ReceiverUserId = order.StudentId,
                     ReceiverName = order.Student.FullName ?? "Student",
                     Amount = order.TotalAmount,
                     Type = TransactionType.Refund,
                     Description = description,
-                    Timestamp = DateTime.UtcNow
+                    Timestamp = DateTime.Now
                 };
 
                 _context.TokenTransactions.Add(transaction);

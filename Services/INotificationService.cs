@@ -6,8 +6,10 @@ namespace FeedMe.Services
 {
     public interface INotificationService
     {
-        // Send a notification to a specific individual user
-        Task CreateNotificationAsync(string userId, string message, string type, int? orderId = null);
+        // Send a notification to a specific individual user.
+        // Never throws - failures are logged internally so a notification issue
+        // can never abort the caller's action (e.g. an order cancellation).
+        Task CreateNotificationAsync(string userId, string message, string type, int? orderId = null, string? title = null);
 
         // Send a notification to all users in a specific role (e.g., "Staff", "Admin")
         Task NotifyRoleAsync(string roleName, string message, string type, int? orderId = null);

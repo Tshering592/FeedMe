@@ -18,7 +18,7 @@ namespace FeedMe.Services
         Task<bool> RejectOrderAsync(int orderId, string reason);
         Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus);
         Task<bool> CancelOrderAsync(int orderId, string studentId);
-        Task<bool> AdminCancelOrderAsync(int orderId, string reason);
+        Task<bool> AdminCancelOrderAsync(int orderId, string reason, string cancelledBy = "Admin");
         Task<bool> MarkCollectedAsync(int orderId);
     }
 }

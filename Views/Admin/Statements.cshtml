@@ -206,20 +206,20 @@
                         {
                             foreach (var tx in Model)
                             {
-                                bool isTopUp = tx.Type == TransactionType.TopUp;
+                                bool isVaultOutflow = tx.Type == TransactionType.TopUp || tx.Type == TransactionType.Refund;
                                 <tr class="tx-row">
                                     <td class="ps-4 fw-bold text-dark">#TX-@tx.Id.ToString("D5")</td>
                                     <td class="text-muted small">@tx.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
                                     <td class="fw-semibold text-dark">@tx.SenderName</td>
                                     <td class="fw-semibold text-dark">@tx.ReceiverName</td>
                                     <td>
-                                        <span class="badge @(isTopUp ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success") rounded-pill px-3 py-1 fw-bold">
+                                        <span class="badge @(isVaultOutflow ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success") rounded-pill px-3 py-1 fw-bold">
                                             @tx.Type
                                         </span>
                                     </td>
                                     <td class="text-muted small text-truncate" style="max-width: 280px;">@tx.Description</td>
                                     <td class="pe-4 text-end">
-                                        @if (isTopUp)
+                                        @if (isVaultOutflow)
                                         {
                                             <span class="fw-bold text-danger">-@tx.Amount.ToString("F2") Tokens</span>
                                         }
