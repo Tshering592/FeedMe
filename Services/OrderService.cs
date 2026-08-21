@@ -1,5 +1,4 @@
 ﻿using FeedMe.Data;
-using FeedMe.DTOs;
 using FeedMe.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -64,11 +63,11 @@ namespace FeedMe.Services
             }
 
             // Deduct Tokens / Balance from Student
-            if (student.TokenBalance < (int)total)
+            if (student.TokenBalance < total)
             {
                 throw new Exception("Insufficient token balance to place this order.");
             }
-            student.TokenBalance -= (int)total;
+            student.TokenBalance -= total;
 
             var order = new Order
             {
@@ -330,7 +329,7 @@ namespace FeedMe.Services
         {
             if (order?.Student != null && order.TotalAmount > 0)
             {
-                order.Student.TokenBalance += (int)order.TotalAmount;
+                order.Student.TokenBalance += order.TotalAmount;
 
                 // The "Admin Central Vault" is the AppUser in the Admin role - the same
                 // account TopUps/deposits already use as the shared vault balance.

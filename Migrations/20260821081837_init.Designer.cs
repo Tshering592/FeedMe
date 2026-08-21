@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FeedMe.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260821045057_init")]
+    [Migration("20260821081837_init")]
     partial class init
     {
         /// <inheritdoc />

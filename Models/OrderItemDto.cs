@@ -1,5 +1,5 @@
-﻿// DTOs/OrderItemDto.cs
-namespace FeedMe.DTOs
+﻿// Models/OrderItemDto.cs
+namespace FeedMe.Models
 {
     public class OrderItemDto
     {
