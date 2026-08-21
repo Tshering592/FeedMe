@@ -1,0 +1,75 @@
+﻿@model FeedMe.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="fm-auth-wrap">
+    <div class="fm-auth-card">
+        <div class="text-center mb-4">
+            <div class="fm-auth-icon">
+                <i class="bi bi-cup-hot-fill"></i>
+            </div>
+            <h3 class="fm-auth-title mb-1">TCMIT Canteen Portal</h3>
+            <p class="fm-auth-subtitle mb-0">Enter your credentials to access your account</p>
+        </div>
+
+        <form asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Email" class="fm-form-label"></label>
+                <input asp-for="Email" class="fm-form-control" placeholder="admin@canteen.com" autofocus />
+                <span asp-validation-for="Email"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Password" class="fm-form-label"></label>
+                <div class="fm-password-wrap">
+                    <input asp-for="Password" class="fm-form-control" placeholder="••••••••" />
+                    <button type="button" class="fm-password-toggle" data-target="Password" aria-label="Show password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password"></span>
+            </div>
+
+            <div class="form-check mb-4 d-flex align-items-center gap-2">
+                <input asp-for="RememberMe" class="form-check-input mt-0" />
+                <label asp-for="RememberMe" class="fm-check-label mb-0"></label>
+            </div>
+
+            <button type="submit" class="fm-btn-primary fm-btn-block">
+                Sign In
+            </button>
+        </form>
+
+        <p class="fm-auth-footer">
+            New? <a asp-controller="Account" asp-action="Register">Create an account</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function() {
+            var toggle = document.querySelector('.fm-password-toggle');
+            if (!toggle) return;
+
+            toggle.addEventListener('click', function() {
+                var targetId = toggle.getAttribute('data-target');
+                var input = document.getElementById(targetId);
+                if (!input) return;
+
+                var icon = toggle.querySelector('i');
+                var showing = input.type === 'text';
+
+                input.type = showing ? 'password' : 'text';
+                icon.classList.toggle('bi-eye', showing);
+                icon.classList.toggle('bi-eye-slash', !showing);
+                toggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+            });
+        })();
+    </script>
+}

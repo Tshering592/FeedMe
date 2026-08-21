@@ -1,0 +1,152 @@
+﻿@using FeedMe.ViewModels
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="row justify-content-center my-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4 p-4 bg-white">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-dark">Create an Account</h3>
+                <p class="text-muted small">Register to order food from the canteen.</p>
+            </div>
+
+            <!-- GOOGLE EXTERNAL REGISTRATION BUTTON -->
+            <form asp-action="ExternalLogin" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="mb-4">
+                @Html.AntiForgeryToken()
+                <button type="submit" name="provider" value="Google" class="btn btn-outline-dark w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                        <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+                    </svg>
+                    Sign up with Google
+                </button>
+            </form>
+
+            <div class="d-flex align-items-center mb-4">
+                <hr class="flex-grow-1 text-muted" />
+                <span class="px-3 text-muted small fw-bold">OR REGISTER WITH EMAIL</span>
+                <hr class="flex-grow-1 text-muted" />
+            </div>
+
+            <form asp-action="Register" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                <!-- Basic Info -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="FullName" class="form-control rounded-3" placeholder="John Doe" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="Email" class="form-control rounded-3" placeholder="john@example.com" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ContactNumber" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="ContactNumber" class="form-control rounded-3" placeholder="98XXXXXXXX" />
+                        <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="DietaryPreference" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="DietaryPreference" class="form-control rounded-3" placeholder="e.g., Veg, Vegan, None" />
+                        <span asp-validation-for="DietaryPreference" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Password" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="Password" type="password" class="form-control rounded-3" placeholder="••••••••" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control rounded-3" placeholder="••••••••" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Role Selection -->
+                <div class="mb-4">
+                    <label asp-for="Role" class="form-label fw-bold text-dark small">I am a...</label>
+                    <select asp-for="Role" id="RoleSelect" class="form-select rounded-3">
+                        <option value="Student" selected>Student</option>
+                        <option value="Staff">Staff</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger small"></span>
+                </div>
+
+                <!-- Student Details (LCID & Semester Only) -->
+                <div id="studentFieldsGroup" class="p-3 mb-4 bg-light rounded-3 border">
+                    <h6 class="fw-bold mb-3 text-primary">Student Details</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StudentLcid" class="form-label fw-bold text-dark small"></label>
+                            <input asp-for="StudentLcid" class="form-control rounded-3" placeholder="e.g. LC00017003504" />
+                            <span asp-validation-for="StudentLcid" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Semester" class="form-label fw-bold text-dark small"></label>
+                            <input asp-for="Semester" class="form-control rounded-3" placeholder="e.g. 3rd" />
+                            <span asp-validation-for="Semester" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staff Details -->
+                <div id="staffFieldsGroup" class="p-3 mb-4 bg-light rounded-3 border" style="display:none;">
+                    <h6 class="fw-bold mb-3 text-success">Staff Details</h6>
+                    <div class="mb-2">
+                        <label asp-for="StaffId" class="form-label fw-bold text-dark small"></label>
+                        <input asp-for="StaffId" class="form-control rounded-3" placeholder="e.g. EMP987" />
+                        <span asp-validation-for="StaffId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm mb-3">
+                    Create Account
+                </button>
+
+                <div class="text-center">
+                    <span class="small text-muted">Already have an account? </span>
+                    <a asp-action="Login" class="small text-danger fw-bold text-decoration-none">Log In Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleFields() {
+            var roleSelect = document.getElementById('RoleSelect');
+            var role = roleSelect ? roleSelect.value : 'Student';
+
+            var studentGroup = document.getElementById('studentFieldsGroup');
+            var staffGroup = document.getElementById('staffFieldsGroup');
+
+            if (studentGroup) studentGroup.style.display = (role === 'Student') ? 'block' : 'none';
+            if (staffGroup) staffGroup.style.display = (role === 'Staff') ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var roleSelect = document.getElementById('RoleSelect');
+            if (roleSelect) {
+                roleSelect.addEventListener('change', toggleFields);
+            }
+            toggleFields();
+        });
+    </script>
+}

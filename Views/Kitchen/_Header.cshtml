@@ -1,0 +1,160 @@
+﻿<!-- Views/Kitchen/_Header.cshtml -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/Kitchen/Dashboard">
+            <i class="bi bi-egg-fried me-2"></i>Kitchen Portal
+        </a>
+
+        <div class="d-flex align-items-center ms-auto">
+            <!-- Notification Bell Dropdown -->
+            <div class="dropdown me-3">
+                <a class="nav-link dropdown-toggle text-white position-relative" href="#" id="kitchenNotificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell-fill fs-5"></i>
+                    <span id="kitchenNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                        0
+                    </span>
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow p-2" aria-labelledby="kitchenNotificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                    <li class="dropdown-header d-flex justify-content-between align-items-center fw-bold border-bottom pb-2">
+                        <span>New Orders</span>
+                        <a href="/Kitchen/Notifications" class="text-decoration-none small">View All</a>
+                    </li>
+                    <li id="notificationContainer">
+                        <ul id="kitchenNotificationList" class="list-unstyled mb-0">
+                            <li class="text-center text-muted py-3 small">Loading notifications...</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+            <!-- Profile & Logout -->
+            <span class="text-white-50 small me-3">Kitchen Staff</span>
+            <a href="/Kitchen/Profile" class="btn btn-outline-light btn-sm rounded-pill px-3 me-2">
+                <i class="bi bi-person-circle me-1"></i> Profile
+            </a>
+
+            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                <button type="submit" class="btn btn-link nav-link border-0 align-middle d-inline p-0 text-white-50">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let previousUnreadCount = -1;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+        document.addEventListener('click', initAudio, { once: true });
+
+        function playNotificationChime() {
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.8);
+            } catch (e) {
+                console.log("Audio chime playback blocked:", e);
+            }
+        }
+
+        // Helper to trigger a desktop/mobile browser popup alert
+        function triggerBrowserPopup(message) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("TCMIT Canteen - New Order", {
+                    body: message,
+                    icon: "/favicon.ico"
+                });
+            }
+        }
+
+        function fetchKitchenNotifications() {
+            fetch('/Kitchen/GetUnreadNotifications')
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (!data) return;
+
+                    const count = data.unreadCount ?? data.UnreadCount ?? 0;
+                    const items = data.items ?? data.Items ?? [];
+                    const badge = document.getElementById('kitchenNotificationBadge');
+                    const list = document.getElementById('kitchenNotificationList');
+
+                    if (badge) {
+                        if (count > 0) {
+                            badge.innerText = count;
+                            badge.classList.remove('d-none');
+                            badge.classList.add('d-inline-block');
+                        } else {
+                            badge.classList.add('d-none');
+                            badge.classList.remove('d-inline-block');
+                        }
+                    }
+
+                    // Trigger sound & browser popup whenever unread count increases
+                    if (previousUnreadCount !== -1 && count > previousUnreadCount) {
+                        playNotificationChime();
+
+                        const latestMessage = items.length > 0 ? (items[0].message ?? items[0].Message) : "New order received!";
+                        triggerBrowserPopup(latestMessage);
+                    }
+                    previousUnreadCount = count;
+
+                    if (list) {
+                        if (items.length === 0) {
+                            list.innerHTML = '<li class="text-center text-muted py-3 small">No new notifications</li>';
+                            return;
+                        }
+
+                        let html = '';
+                        items.forEach(item => {
+                            const createdAt = item.createdAt ?? item.CreatedAt;
+                            const message = item.message ?? item.Message ?? 'New order update';
+                            const isRead = item.isRead ?? item.IsRead ?? false;
+
+                            const timeStr = createdAt ? new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                            const bgClass = isRead ? 'bg-white' : 'bg-light';
+
+                            html += `
+                                        <li class="p-2 border-bottom ${bgClass}">
+                                            <a href="/Kitchen/Dashboard" class="text-decoration-none text-dark d-block">
+                                                <div class="fw-bold small text-primary mb-1">
+                                                    <i class="bi bi-bell me-1"></i>${message}
+                                                </div>
+                                                <div class="text-muted" style="font-size: 11px;">
+                                                    <i class="bi bi-clock me-1"></i>${timeStr}
+                                                </div>
+                                            </a>
+                                        </li>`;
+                        });
+                        list.innerHTML = html;
+                    }
+                })
+                .catch(err => console.error("Notification load error:", err));
+        }
+
+        fetchKitchenNotifications();
+        setInterval(fetchKitchenNotifications, 5000);
+    });
+</script>

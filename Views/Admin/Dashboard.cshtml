@@ -1,0 +1,154 @@
+﻿@model FeedMe.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid py-3">
+    <!-- Top Stat Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Today's Orders -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle me-3">
+                        <i class="bi bi-bag-check-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-semibold">Today's Orders</small>
+                        <h3 class="fw-bold mb-0">@Model.TodaysOrdersCount</h3>
+                        <small class="text-success fw-medium">
+                            <i class="bi bi-arrow-up-short"></i> Active
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Today -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle me-3">
+                        <i class="bi bi-currency-rupee fs-4"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-semibold">Revenue Today</small>
+                        <h3 class="fw-bold mb-0">Rs @Model.TodaysRevenue.ToString("N0")</h3>
+                        <small class="text-success fw-medium">
+                            <i class="bi bi-arrow-up-short"></i> Today's Total
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle me-3">
+                        <i class="bi bi-clock-history fs-4"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-semibold">Pending Orders</small>
+                        <h3 class="fw-bold mb-0">@Model.PendingOrdersCount</h3>
+                        <small class="text-primary fw-medium">Needs attention</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Items -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle me-3">
+                        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-semibold">Low Stock Items</small>
+                        <h3 class="fw-bold mb-0">@Model.LowStockItemsCount</h3>
+                        <small class="text-warning fw-medium">Check inventory</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-bar-chart-line-fill text-danger me-2"></i>Order Analytics
+                </h5>
+                <small class="text-muted">Overview of order volume breakdown</small>
+            </div>
+            <button class="btn btn-sm btn-light border rounded-3 dropdown-toggle" type="button">
+                This Week
+            </button>
+        </div>
+
+        <div style="position: relative; height: 320px; width: 100%;">
+            <canvas id="orderAnalyticsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Deserialize array of 7 integers passed from backend
+            const weeklyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.WeeklyOrderCounts));
+
+            const maxVal = Math.max(...weeklyData, 5); // Dynamic y-axis ceiling
+
+            const ctx = document.getElementById('orderAnalyticsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{
+                        label: 'Orders',
+                        data: weeklyData,
+                        backgroundColor: '#e63946',
+                        hoverBackgroundColor: '#d62828',
+                        borderRadius: 6,
+                        barThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Orders: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: maxVal,
+                            ticks: {
+                                precision: 0,
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: '#f0f0f0'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

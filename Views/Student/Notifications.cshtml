@@ -1,0 +1,193 @@
+﻿@using FeedMe.Models
+@model List<Notification>
+@{
+    ViewData["Title"] = "Notifications - Student Portal";
+
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!-- HIDE DEFAULT NAVBAR/FOOTER & ALIGN MAIN CONTENT ACCURATELY -->
+<style>
+    header, footer, nav.navbar, .navbar {
+        display: none !important;
+    }
+
+    html, body {
+        background-color: #f8fafc !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    /* Fixed Left Sidebar */
+    .admin-sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #0f172a;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    /* Absolute Viewport Anchoring: Fills screen edge-to-edge from sidebar */
+    .admin-main-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 250px !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        padding: 32px 40px !important;
+        box-sizing: border-box !important;
+        background-color: #f8fafc !important;
+    }
+
+        .admin-main-content .card {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+</style>
+
+<div class="d-flex">
+    <!-- STUDENT SIDEBAR -->
+    <div class="admin-sidebar text-white p-3 d-flex flex-column justify-content-between">
+        <div>
+            <!-- Branding -->
+            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; min-width: 42px;">
+                    <i class="bi bi-cup-hot-fill text-white fs-5"></i>
+                </div>
+                <div class="text-truncate">
+                    <h6 class="fw-bold m-0 text-white text-truncate" style="font-size: 0.95rem;">TCMIT CANTEEN</h6>
+                    <span class="text-danger small fw-semibold" style="font-size: 0.75rem;">Student Portal</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <ul class="nav nav-pills flex-column gap-2">
+                <li class="nav-item">
+                    <a asp-action="Dashboard" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Dashboard" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-grid-fill me-2 fs-5 align-middle"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="FullMenu" class="nav-link rounded-3 py-2 px-3 @(currentAction == "FullMenu" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-journal-text me-2 fs-5 align-middle"></i> Canteen Menu
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Orders" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Orders" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-clock-history me-2 fs-5 align-middle"></i> My Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <!-- VAULT LINK WITH VAULT ICON -->
+                    <a asp-action="Vault" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Vault" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-safe-fill me-2 fs-5 align-middle"></i> Token Vault
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <!-- STATEMENT LINK WITH STATEMENT ICON -->
+                    <a asp-action="Statements" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Statements" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-file-earmark-text-fill me-2 fs-5 align-middle"></i> Statement
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Notifications" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Notifications" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-bell-fill me-2 fs-5 align-middle"></i> Notifications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Profile" class="nav-link rounded-3 py-2 px-3 @(currentAction == "Profile" ? "active bg-danger fw-bold text-white" : "text-secondary fw-semibold text-white-50")">
+                        <i class="bi bi-person-circle me-2 fs-5 align-middle"></i> Profile
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Logout Button -->
+        <div class="pt-3 border-top border-secondary border-opacity-25">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn text-danger w-100 text-start fw-bold p-0 border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-left me-2 fs-5 align-middle"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <div class="admin-main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark m-0">Notifications</h2>
+                <p class="text-muted small mt-1 mb-0">View all your status updates and canteen alerts.</p>
+            </div>
+            <button id="btnEnablePush" class="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm">
+                <i class="bi bi-bell-plus-fill me-1"></i> Enable Device Popups
+            </button>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden w-100 mb-4">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="p-5 text-center">
+                    <i class="bi bi-bell-slash fs-1 text-muted d-block mb-2"></i>
+                    <h6 class="fw-bold text-dark m-0">No notifications yet</h6>
+                    <p class="text-muted small mt-1 mb-0">You're all caught up! Updates regarding your food orders will appear here.</p>
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var notif in Model)
+                    {
+                        <div class="list-group-item p-4 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark m-0">
+                                    <i class="bi bi-info-circle-fill text-danger me-2"></i>@notif.Title
+                                </h6>
+                                <span class="badge bg-light text-muted border rounded-pill px-3 py-1 small">
+                                    @notif.CreatedAt.ToString("MMM dd, yyyy - hh:mm tt")
+                                </span>
+                            </div>
+                            <p class="text-muted small m-0 ps-4">@notif.Message</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Request System Notification Permission for Device Popups
+        const btnPush = document.getElementById('btnEnablePush');
+        if (btnPush) {
+            btnPush.addEventListener('click', function() {
+                if (!("Notification" in window)) {
+                    alert("This browser does not support desktop/mobile notifications.");
+                    return;
+                }
+
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === "granted") {
+                        new Notification("TCMIT Canteen Portal", {
+                            body: "Device notifications enabled! You will now receive order alerts even when the browser is closed.",
+                            icon: "/images/canteen-icon.png"
+                        });
+                        btnPush.classList.replace("btn-outline-danger", "btn-success");
+                        btnPush.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Device Popups Active';
+                    } else {
+                        alert("Notification permission denied. Please enable notifications in your browser settings.");
+                    }
+                });
+            });
+        }
+    </script>
+}

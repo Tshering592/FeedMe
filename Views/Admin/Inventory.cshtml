@@ -1,0 +1,210 @@
+﻿@model IEnumerable<FeedMe.Models.MenuItem>
+@{
+    ViewData["Title"] = "Inventory Management";
+    Layout = "_AdminLayout";
+
+    // Extract unique category names for filter pills
+    var categories = Model.Select(m => m.Category?.Name).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark m-0">Canteen Inventory</h3>
+        <p class="text-muted small m-0">Manage items, prices, stock levels, and menu visibility.</p>
+    </div>
+    <a asp-action="CreateItem" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add New Product
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- SEARCH & CATEGORY FILTER BAR -->
+<div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col-md-4">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" id="inventorySearchInput" class="form-control rounded-pill ps-5 pe-4 py-2 border-light bg-light small" placeholder="Search inventory items..." />
+            </div>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="col-md-8">
+            <div class="d-flex flex-wrap gap-2 justify-content-md-end" id="categoryFilterContainer">
+                <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold category-pill active-pill btn-danger text-white" data-category="all">All</button>
+                @foreach (var cat in categories)
+                {
+                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold category-pill btn-light text-dark border-0" data-category="@cat?.ToLower()">@cat</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INVENTORY TABLE -->
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    @if (!Model.Any())
+    {
+        <div class="p-5 text-center">
+            <i class="bi bi-box-seam fs-1 text-muted d-block mb-2"></i>
+            <h6 class="fw-bold text-dark mb-1">No products in inventory</h6>
+            <p class="text-muted small mb-0">Click <strong>"Add New Product"</strong> above to start populating your canteen inventory.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-nowrap" id="inventoryTable">
+                <thead class="bg-light border-bottom text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <tr>
+                        <th class="ps-4 py-3">Item</th>
+                        <th class="py-3">Category</th>
+                        <th class="py-3">Price</th>
+                        <th class="py-3 text-center">Stock</th>
+                        <th class="py-3">Status</th>
+                        <th class="pe-4 py-3 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    @foreach (var item in Model)
+                    {
+                        var categoryName = item.Category?.Name ?? "General";
+                        <tr class="inventory-item-row" data-name="@item.Name.ToLower()" data-category="@categoryName.ToLower()">
+                            <!-- ITEM (IMAGE + NAME + HOT MEAL BADGE) -->
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "/images/placeholder.png" : item.ImageUrl)"
+                                         class="rounded-3 shadow-sm" style="width: 48px; height: 48px; object-fit: cover;" alt="@item.Name" />
+                                    <div>
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                            @item.Name
+                                            @if (item.IsHotMeal)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.65rem;">
+                                                    <i class="bi bi-fire me-1"></i> Hot
+                                                </span>
+                                            }
+                                        </div>
+                                        <small class="text-muted d-block text-truncate" style="max-width: 220px;">@item.Description</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- CATEGORY -->
+                            <td class="py-3">
+                                <span class="fw-medium text-dark">@categoryName</span>
+                            </td>
+
+                            <!-- PRICE (TOKEN ICON) -->
+                            <td class="py-3">
+                                <span class="fw-bold text-dark d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-coin text-warning"></i> @item.Price.ToString("N0") Tokens
+                                </span>
+                            </td>
+
+                            <!-- STOCK -->
+                            <td class="py-3 text-center">
+                                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold">
+                                    @(item.StockQuantity.HasValue ? item.StockQuantity.Value.ToString() : "20")
+                                </span>
+                            </td>
+
+                            <!-- STATUS TOGGLE -->
+                            <td class="py-3">
+                                <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm border-0 p-0" title="Click to toggle status">
+                                        @if (item.IsPublished)
+                                        {
+                                            <span class="badge rounded-pill px-3 py-2 fw-bold bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i> Available
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill px-3 py-2 fw-bold bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                                Draft
+                                            </span>
+                                        }
+                                    </button>
+                                </form>
+                            </td>
+
+                            <!-- ACTIONS -->
+                            <td class="pe-4 py-3 text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a asp-action="EditItem" asp-route-id="@item.Id" class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm" title="Edit Item">
+                                        <i class="bi bi-pencil text-secondary"></i>
+                                    </a>
+                                    <form asp-action="DeleteItem" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete @item.Name?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm text-danger" title="Delete Item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("inventorySearchInput");
+            const categoryPills = document.querySelectorAll(".category-pill");
+            const rows = document.querySelectorAll(".inventory-item-row");
+
+            let activeCategory = "all";
+
+            function filterInventory() {
+                const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+                rows.forEach(row => {
+                    const name = row.getAttribute("data-name") || "";
+                    const category = row.getAttribute("data-category") || "";
+
+                    const matchesSearch = name.includes(query);
+                    const matchesCategory = (activeCategory === "all") || (category === activeCategory);
+
+                    if (matchesSearch && matchesCategory) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener("input", filterInventory);
+            }
+
+            categoryPills.forEach(pill => {
+                pill.addEventListener("click", function() {
+                    categoryPills.forEach(p => {
+                        p.classList.remove("btn-danger", "text-white", "active-pill");
+                        p.classList.add("btn-light", "text-dark");
+                    });
+
+                    this.classList.remove("btn-light", "text-dark");
+                    this.classList.add("btn-danger", "text-white", "active-pill");
+
+                    activeCategory = this.getAttribute("data-category");
+                    filterInventory();
+                });
+            });
+        });
+    </script>
+}

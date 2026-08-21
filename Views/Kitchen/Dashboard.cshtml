@@ -1,0 +1,211 @@
+﻿@model FeedMe.ViewModels.KitchenDashboardViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+    ViewData["Title"] = "Kitchen & Orders Dashboard";
+    string currentFilter = ViewBag.CurrentFilter ?? "all";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FeedMe</title>
+
+    <!-- Bootstrap 5 & Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+</head>
+<body class="bg-light">
+
+    <!-- Single Kitchen Navigation Bar -->
+    @await Html.PartialAsync("_Header")
+
+    <div class="container-fluid py-2 px-4">
+        <!-- TOP REPORT CARDS -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50 fw-bold text-uppercase">Total Orders Today</h6>
+                            <h2 class="fw-bold mb-0">@Model.TotalOrdersToday</h2>
+                        </div>
+                        <i class="bi bi-receipt fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 bg-warning text-dark p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-dark-50 fw-bold text-uppercase">Pending / Preparing</h6>
+                            <h2 class="fw-bold mb-0">@(Model.PendingOrders + Model.PreparingOrders)</h2>
+                        </div>
+                        <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 bg-success text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50 fw-bold text-uppercase">Ready for Pickup</h6>
+                            <h2 class="fw-bold mb-0">@Model.ReadyOrders</h2>
+                        </div>
+                        <i class="bi bi-check2-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 bg-dark text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50 fw-bold text-uppercase">Today's Total Sales</h6>
+                            <h2 class="fw-bold mb-0 d-flex align-items-center gap-1">
+                                <div class="rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 24px; height: 24px;">
+                                    <i class="bi bi-currency-dollar fw-bold" style="font-size: 14px;"></i>
+                                </div>
+                                @Model.TotalRevenueToday.ToString("F2")
+                            </h2>
+                        </div>
+                        <i class="bi bi-graph-up-arrow fs-1 text-warning opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS STATUS MANAGEMENT TABLE -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center border-bottom gap-2">
+                <h5 class="fw-bold m-0"><i class="bi bi-list-check me-2"></i>Live Kitchen Orders</h5>
+
+                <!-- FILTER ICON BUTTONS -->
+                <div class="btn-group" role="group" aria-label="Order Filters">
+                    <a asp-action="Dashboard" asp-route-filter="all" class="btn btn-sm @(currentFilter == "all" ? "btn-primary" : "btn-outline-secondary") rounded-pill me-1 px-3">
+                        <i class="bi bi-list-task me-1"></i> Live Order Queue
+                    </a>
+                    <a asp-action="Dashboard" asp-route-filter="preparing" class="btn btn-sm @(currentFilter == "preparing" ? "btn-warning text-dark" : "btn-outline-warning text-dark") rounded-pill me-1 px-3">
+                        <i class="bi bi-hourglass-split me-1"></i> Preparing
+                    </a>
+                    <a asp-action="Dashboard" asp-route-filter="completed" class="btn btn-sm @(currentFilter == "completed" ? "btn-success" : "btn-outline-success") rounded-pill me-1 px-3">
+                        <i class="bi bi-check-circle me-1"></i> Completed
+                    </a>
+                    <a asp-action="Dashboard" asp-route-filter="cancelled" class="btn btn-sm @(currentFilter == "cancelled" ? "btn-danger" : "btn-outline-danger") rounded-pill px-3">
+                        <i class="bi bi-x-circle me-1"></i> Cancelled
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Student</th>
+                                <th>Items & Qty</th>
+                                <th>Time Slot</th>
+                                <th>Total Tokens</th>
+                                <th>Status</th>
+                                <th>Update Status Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ActiveOrders.Any())
+                            {
+                                @foreach (var order in Model.ActiveOrders)
+                                {
+                                    bool isFinalized = order.Status == FeedMe.Models.OrderStatus.Completed
+                                                    || order.Status == FeedMe.Models.OrderStatus.Cancelled
+                                                    || order.Status == FeedMe.Models.OrderStatus.Rejected;
+
+                                    <tr>
+                                        <td class="fw-bold">#@order.Id.ToString("D3")</td>
+                                        <td>
+                                            <div class="fw-semibold">@order.StudentName</div>
+                                            <small class="text-muted">LCID: @order.StudentLcid</small>
+                                        </td>
+                                        <td>
+                                            <ul class="list-unstyled mb-0 small">
+                                                @foreach (var item in order.OrderItems)
+                                                {
+                                                    <li><strong>@item.Quantity x</strong> @item.MenuItem?.Name</li>
+                                                }
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="bi bi-clock me-1"></i>@order.TimeSlot?.SlotName
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-1 fw-bold text-dark">
+                                                <div class="rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 18px; height: 18px;">
+                                                    <i class="bi bi-currency-dollar fw-bold" style="font-size: 11px;"></i>
+                                                </div>
+                                                @order.TotalAmount.ToString("F2")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @switch (order.Status)
+                                            {
+                                                case FeedMe.Models.OrderStatus.Preparing:
+                                                    <span class="badge bg-warning text-dark">Preparing</span>
+                                                    break;
+                                                case FeedMe.Models.OrderStatus.Ready:
+                                                    <span class="badge bg-info text-dark">Ready</span>
+                                                    break;
+                                                case FeedMe.Models.OrderStatus.Completed:
+                                                    <span class="badge bg-success">Delivered</span>
+                                                    break;
+                                                case FeedMe.Models.OrderStatus.Cancelled:
+                                                    <span class="badge bg-danger">Cancelled</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (isFinalized)
+                                            {
+                                                <span class="text-muted small fw-semibold">
+                                                    <i class="bi bi-lock-fill me-1"></i>No further actions
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <form asp-controller="Kitchen" asp-action="UpdateOrderStatus" method="post" class="d-flex gap-1">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="orderId" value="@order.Id" />
+                                                    <select name="status" class="form-select form-select-sm rounded-3" style="width: 130px;">
+                                                        <option value="Preparing" selected="@(order.Status == FeedMe.Models.OrderStatus.Preparing)">Preparing</option>
+                                                        <option value="Ready" selected="@(order.Status == FeedMe.Models.OrderStatus.Ready)">Ready</option>
+                                                        <option value="Completed" selected="@(order.Status == FeedMe.Models.OrderStatus.Completed)">Completed</option>
+                                                        <option value="Cancelled" selected="@(order.Status == FeedMe.Models.OrderStatus.Cancelled)">Cancelled</option>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-primary btn-sm rounded-3 px-3">Update</button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        No active orders found for this view.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

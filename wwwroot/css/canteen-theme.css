@@ -1,0 +1,1031 @@
+﻿/* ==========================================================================
+   FeedMe — Canteen Design System
+   Add to _Layout.cshtml <head>, AFTER bootstrap.min.css and bootstrap-icons:
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="~/css/canteen-theme.css" asp-append-version="true">
+
+   This file only ADDS classes/tokens — it does not touch Bootstrap's own
+   classes, so nothing already using .btn, .card, .badge, etc. will break.
+   ========================================================================== */
+
+:root {
+    /* Color */
+    --fm-cream: #FFF8F2;
+    --fm-ink: #241C1A;
+    --fm-ink-soft: #6B5D56;
+    --fm-coral: #E4472F;
+    --fm-coral-dark: #C23A25;
+    --fm-coral-tint: #FDEAE6;
+    --fm-gold: #F0A202;
+    --fm-gold-tint: #FDF1D9;
+    --fm-veg: #3E9142;
+    --fm-nonveg: #C23A25;
+    --fm-border: #F0E4DA;
+    --fm-card-bg: #FFFFFF;
+    --fm-board: #241C1A;
+    --fm-board-edge: #3d2e24;
+    /* Type */
+    --fm-font-display: 'Baloo 2', 'Segoe UI', sans-serif;
+    --fm-font-body: 'Inter', 'Segoe UI', sans-serif;
+    /* Shape / elevation */
+    --fm-radius-lg: 20px;
+    --fm-radius-md: 14px;
+    --fm-radius-pill: 999px;
+    --fm-shadow-sm: 0 2px 10px rgba(36, 28, 26, 0.06);
+    --fm-shadow-md: 0 6px 20px rgba(36, 28, 26, 0.10);
+    --fm-shadow-hover: 0 14px 32px rgba(228, 71, 47, 0.16);
+    --fm-transition: 180ms ease;
+}
+
+body {
+    background: var(--fm-cream);
+    color: var(--fm-ink);
+    font-family: var(--fm-font-body);
+}
+
+h1, h2, h3, h4, h5, h6,
+.fm-display {
+    font-family: var(--fm-font-display);
+    color: var(--fm-ink);
+    letter-spacing: 0.2px;
+}
+
+a {
+    color: var(--fm-coral);
+}
+
+    a:hover {
+        color: var(--fm-coral-dark);
+    }
+
+/* Respect reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* --------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------- */
+.fm-btn-primary {
+    background: var(--fm-coral);
+    border: 1px solid var(--fm-coral);
+    color: #fff;
+    font-family: var(--fm-font-body);
+    font-weight: 600;
+    border-radius: var(--fm-radius-pill);
+    padding: 0.7rem 1.6rem;
+    transition: background var(--fm-transition), transform var(--fm-transition), box-shadow var(--fm-transition);
+}
+
+    .fm-btn-primary:hover,
+    .fm-btn-primary:focus-visible {
+        background: var(--fm-coral-dark);
+        border-color: var(--fm-coral-dark);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: var(--fm-shadow-hover);
+    }
+
+    .fm-btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .fm-btn-primary:focus-visible {
+        outline: 3px solid var(--fm-gold-tint);
+        outline-offset: 2px;
+    }
+
+.fm-btn-sm {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.1rem;
+}
+
+.fm-btn-ghost-light {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #fff;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--fm-transition), transform var(--fm-transition);
+}
+
+    .fm-btn-ghost-light:hover {
+        background: rgba(255,255,255,0.18);
+        transform: scale(1.05);
+    }
+
+/* --------------------------------------------------------------------
+   Eyebrow / category tag / badges
+   -------------------------------------------------------------------- */
+.fm-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--fm-gold-tint);
+    color: #7A5200;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.28rem 0.7rem;
+    border-radius: var(--fm-radius-pill);
+}
+
+.fm-badge-hot {
+    background: var(--fm-coral);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--fm-radius-pill);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* Veg / non-veg indicator — Indian/Nepali menu convention.
+   Only use if MenuItem exposes an IsVegetarian bool; see Index.cshtml comment. */
+.fm-diet-dot {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    border: 1.5px solid var(--fm-veg);
+    position: relative;
+    flex-shrink: 0;
+}
+
+    .fm-diet-dot::after {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border-radius: 50%;
+        background: var(--fm-veg);
+    }
+
+    .fm-diet-dot.fm-nonveg {
+        border-color: var(--fm-nonveg);
+    }
+
+        .fm-diet-dot.fm-nonveg::after {
+            background: var(--fm-nonveg);
+        }
+
+.fm-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    color: var(--fm-ink);
+    font-size: 1.15rem;
+}
+
+    .fm-price .fm-price-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--fm-gold-tint);
+        color: var(--fm-gold);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+    }
+
+/* --------------------------------------------------------------------
+   Hero / chalkboard
+   -------------------------------------------------------------------- */
+.fm-hero {
+    background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05) 0%, transparent 45%), radial-gradient(circle at 50% 50%, #2a221b 0%, #17110d 70%, #0a0705 100%);
+    border: 1px solid var(--fm-board-edge);
+    border-radius: var(--fm-radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.fm-hero-copy {
+    position: relative;
+    z-index: 10;
+}
+
+.fm-hero-eyebrow {
+    color: var(--fm-gold);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .fm-hero-eyebrow::before {
+        content: "";
+        width: 18px;
+        height: 2px;
+        background: var(--fm-gold);
+        display: inline-block;
+    }
+
+.fm-hero-title {
+    color: #fff;
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.fm-hero-lead {
+    color: #E9E1DA;
+    font-family: var(--fm-font-body);
+}
+
+/* "Pinned photo" spotlight card — the signature element */
+.fm-pin-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--fm-radius-md);
+    padding: 1rem;
+    transform: rotate(-1.2deg);
+    transition: transform var(--fm-transition);
+}
+
+    .fm-pin-card:hover {
+        transform: rotate(0deg);
+    }
+
+    .fm-pin-card::before {
+        /* pushpin */
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #ff8a70, var(--fm-coral) 65%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        top: -7px;
+        left: 24px;
+    }
+
+.fm-pin-photo {
+    width: 140px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+
+/* --------------------------------------------------------------------
+   Featured meal stack — fanned cards, auto-rotating, no arrow buttons.
+   Center card is active; neighbors peek out to either side, scaled
+   down and faded. Clicking a dot or a side card jumps to it.
+   -------------------------------------------------------------------- */
+.fm-meal-stack {
+    position: relative;
+    height: 190px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.fm-stack-item {
+    position: absolute;
+    inset: 0;
+    transition: transform 550ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 550ms ease, filter 550ms ease;
+    will-change: transform, opacity;
+}
+
+.fm-meal-stack .fm-pin-card {
+    width: 100%;
+    height: 100%;
+    transform: none; /* stack item handles positioning; card no longer self-rotates */
+}
+
+    .fm-meal-stack .fm-pin-card:hover {
+        transform: none;
+    }
+
+.fm-stack-pos-center {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    z-index: 5;
+    filter: none;
+}
+
+.fm-stack-pos-r1 {
+    transform: translateX(58%) scale(0.82);
+    opacity: 0.55;
+    z-index: 4;
+    filter: blur(1.5px);
+    cursor: pointer;
+}
+
+.fm-stack-pos-l1 {
+    transform: translateX(-58%) scale(0.82);
+    opacity: 0.55;
+    z-index: 4;
+    filter: blur(1.5px);
+    cursor: pointer;
+}
+
+.fm-stack-pos-r2 {
+    transform: translateX(102%) scale(0.66);
+    opacity: 0.22;
+    z-index: 3;
+    filter: blur(2.5px);
+    cursor: pointer;
+}
+
+.fm-stack-pos-l2 {
+    transform: translateX(-102%) scale(0.66);
+    opacity: 0.22;
+    z-index: 3;
+    filter: blur(2.5px);
+    cursor: pointer;
+}
+
+.fm-stack-pos-hidden {
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.fm-stack-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 1rem;
+}
+
+.fm-stack-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.28);
+    padding: 0;
+    cursor: pointer;
+    transition: background var(--fm-transition), transform var(--fm-transition);
+}
+
+    .fm-stack-dot:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .fm-stack-dot.active {
+        background: var(--fm-gold);
+        transform: scale(1.3);
+    }
+
+    .fm-stack-dot:focus-visible {
+        outline: 2px solid var(--fm-gold);
+        outline-offset: 2px;
+    }
+
+@media (max-width: 767.98px) {
+    .fm-meal-stack {
+        height: 150px;
+        max-width: 320px;
+    }
+
+    .fm-stack-pos-r1 {
+        transform: translateX(50%) scale(0.8);
+    }
+
+    .fm-stack-pos-l1 {
+        transform: translateX(-50%) scale(0.8);
+    }
+
+    .fm-stack-pos-r2, .fm-stack-pos-l2 {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/* --------------------------------------------------------------------
+   Section headers
+   -------------------------------------------------------------------- */
+.fm-section-title {
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: var(--fm-ink);
+}
+
+.fm-section-link {
+    color: var(--fm-coral);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+    .fm-section-link:hover {
+        color: var(--fm-coral-dark);
+        text-decoration: underline;
+    }
+
+/* --------------------------------------------------------------------
+   Food cards
+   -------------------------------------------------------------------- */
+.fm-food-card {
+    background: var(--fm-card-bg);
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--fm-shadow-sm);
+    transition: transform var(--fm-transition), box-shadow var(--fm-transition), border-color var(--fm-transition);
+    height: 100%;
+}
+
+    .fm-food-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--fm-shadow-hover);
+        border-color: var(--fm-coral-tint);
+    }
+
+.fm-food-img-wrap {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--fm-gold-tint);
+    position: relative;
+}
+
+    .fm-food-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 400ms ease;
+    }
+
+.fm-food-card:hover .fm-food-img-wrap img {
+    transform: scale(1.05);
+}
+
+/* Medium, fixed-height image variant — used on the Menu grid so images
+   stay a consistent, moderate size instead of scaling with column width. */
+.fm-food-img-wrap.fm-img-md {
+    aspect-ratio: auto;
+    height: 170px;
+}
+
+@media (max-width: 767.98px) {
+    .fm-food-img-wrap.fm-img-md {
+        height: 150px;
+    }
+}
+
+.fm-food-body {
+    padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.fm-food-name {
+    font-family: var(--fm-font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--fm-ink);
+    margin-bottom: 0.2rem;
+}
+
+.fm-food-desc {
+    color: var(--fm-ink-soft);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.fm-food-footer {
+    border-top: 1px dashed var(--fm-border);
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Unavailable state — use when an item is out of stock */
+.fm-food-card.fm-unavailable .fm-food-img-wrap img {
+    filter: grayscale(60%);
+    opacity: 0.6;
+}
+
+.fm-food-card.fm-unavailable {
+    box-shadow: none;
+}
+
+    .fm-food-card.fm-unavailable:hover {
+        transform: none;
+    }
+
+.fm-unavailable-badge {
+    position: absolute;
+    inset: 0;
+    background: rgba(36,28,26,0.55);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .fm-hero-title {
+        font-size: 2.1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .fm-pin-photo {
+        width: 110px;
+        height: 100px;
+    }
+
+    .fm-hero-title {
+        font-size: 1.8rem;
+    }
+}
+
+/* --------------------------------------------------------------------
+   Menu page — page header, filter pills, search bar, empty state
+   -------------------------------------------------------------------- */
+.fm-page-title {
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--fm-ink);
+}
+
+.fm-page-subtitle {
+    color: var(--fm-ink-soft);
+    font-size: 0.96rem;
+}
+
+.fm-filter-pill {
+    font-family: var(--fm-font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: var(--fm-radius-pill);
+    border: 1.5px solid var(--fm-border);
+    background: #fff;
+    color: var(--fm-ink-soft);
+    transition: background var(--fm-transition), color var(--fm-transition), border-color var(--fm-transition);
+}
+
+    .fm-filter-pill:hover,
+    .fm-filter-pill:focus-visible {
+        border-color: var(--fm-coral-tint);
+        background: var(--fm-coral-tint);
+        color: var(--fm-coral-dark);
+    }
+
+    .fm-filter-pill:focus-visible {
+        outline: 3px solid var(--fm-coral-tint);
+        outline-offset: 2px;
+    }
+
+    .fm-filter-pill.active {
+        background: var(--fm-coral);
+        border-color: var(--fm-coral);
+        color: #fff;
+    }
+
+        .fm-filter-pill.active:hover {
+            background: var(--fm-coral-dark);
+            border-color: var(--fm-coral-dark);
+            color: #fff;
+        }
+
+.fm-search-wrap {
+    display: flex;
+    border-radius: var(--fm-radius-pill);
+    border: 1.5px solid var(--fm-border);
+    background: #fff;
+    overflow: hidden;
+    transition: border-color var(--fm-transition), box-shadow var(--fm-transition);
+}
+
+    .fm-search-wrap:focus-within {
+        border-color: var(--fm-coral);
+        box-shadow: 0 0 0 3px var(--fm-coral-tint);
+    }
+
+.fm-search-input {
+    border: none;
+    outline: none;
+    padding: 0.65rem 1.1rem;
+    flex: 1;
+    min-width: 0;
+    font-family: var(--fm-font-body);
+    font-size: 0.92rem;
+    background: transparent;
+    color: var(--fm-ink);
+}
+
+    .fm-search-input::placeholder {
+        color: var(--fm-ink-soft);
+        opacity: 0.7;
+    }
+
+.fm-search-btn {
+    border: none;
+    background: var(--fm-coral);
+    color: #fff;
+    padding: 0 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--fm-transition);
+}
+
+    .fm-search-btn:hover,
+    .fm-search-btn:focus-visible {
+        background: var(--fm-coral-dark);
+    }
+
+.fm-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.fm-empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    border: 1px dashed var(--fm-border);
+    border-radius: var(--fm-radius-lg);
+    background: #fff;
+}
+
+    .fm-empty-state i {
+        font-size: 2rem;
+        color: var(--fm-gold);
+    }
+
+    .fm-empty-state h5 {
+        font-family: var(--fm-font-display);
+        margin-top: 0.75rem;
+        color: var(--fm-ink);
+    }
+
+    .fm-empty-state p {
+        color: var(--fm-ink-soft);
+        margin: 0;
+    }
+
+/* --------------------------------------------------------------------
+   Auth pages (Login / Register)
+   -------------------------------------------------------------------- */
+.fm-auth-wrap {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+}
+
+.fm-auth-card {
+    background: #fff;
+    border-radius: var(--fm-radius-lg);
+    box-shadow: var(--fm-shadow-md);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 440px;
+}
+
+.fm-auth-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--fm-coral);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin: 0 auto 1rem;
+}
+
+.fm-auth-title {
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--fm-ink);
+}
+
+.fm-auth-subtitle {
+    color: var(--fm-ink-soft);
+    font-size: 0.9rem;
+}
+
+.fm-form-label {
+    font-weight: 600;
+    color: var(--fm-ink);
+    font-size: 0.92rem;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+}
+
+.fm-form-control {
+    width: 100%;
+    border: 1.5px solid var(--fm-border);
+    border-radius: var(--fm-radius-md);
+    padding: 0.65rem 1rem;
+    font-family: var(--fm-font-body);
+    font-size: 0.95rem;
+    color: var(--fm-ink);
+    background: #fff;
+    transition: border-color var(--fm-transition), box-shadow var(--fm-transition);
+}
+
+    .fm-form-control:focus {
+        outline: none;
+        border-color: var(--fm-coral);
+        box-shadow: 0 0 0 3px var(--fm-coral-tint);
+    }
+
+    .fm-form-control.input-validation-error {
+        border-color: var(--fm-nonveg);
+    }
+
+    .fm-form-control::placeholder {
+        color: var(--fm-ink-soft);
+        opacity: 0.6;
+    }
+
+span.field-validation-error {
+    color: var(--fm-nonveg);
+    font-size: 0.82rem;
+    margin-top: 0.3rem;
+    display: block;
+}
+
+.validation-summary-errors {
+    background: var(--fm-coral-tint);
+    border: 1px solid var(--fm-coral);
+    color: var(--fm-coral-dark);
+    padding: 0.75rem 1rem;
+    border-radius: var(--fm-radius-md);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+    .validation-summary-errors ul {
+        margin: 0;
+        padding-left: 1.1rem;
+    }
+
+.validation-summary-valid {
+    display: none;
+}
+
+.fm-password-wrap {
+    position: relative;
+}
+
+    .fm-password-wrap .fm-form-control {
+        padding-right: 2.75rem;
+    }
+
+.fm-password-toggle {
+    position: absolute;
+    right: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--fm-ink-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    transition: color var(--fm-transition);
+}
+
+    .fm-password-toggle:hover,
+    .fm-password-toggle:focus-visible {
+        color: var(--fm-coral);
+    }
+
+.form-check-input {
+    accent-color: var(--fm-coral);
+}
+
+.fm-check-label {
+    color: var(--fm-ink-soft);
+    font-size: 0.9rem;
+}
+
+.fm-btn-block {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.fm-auth-footer {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--fm-ink-soft);
+    margin-top: 1.5rem;
+}
+
+    .fm-auth-footer a {
+        color: var(--fm-coral);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .fm-auth-footer a:hover {
+            color: var(--fm-coral-dark);
+            text-decoration: underline;
+        }
+
+/* --------------------------------------------------------------------
+   Navbar
+   -------------------------------------------------------------------- */
+.fm-skip-link {
+    position: absolute;
+    left: -999px;
+    top: 0;
+    background: var(--fm-coral);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 8px 0;
+    z-index: 2000;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .fm-skip-link:focus {
+        left: 0;
+        color: #fff;
+    }
+
+.fm-navbar {
+    background: #fff;
+    border-bottom: 1px solid var(--fm-border);
+}
+
+.fm-brand {
+    font-family: var(--fm-font-display);
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--fm-ink) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.fm-brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--fm-coral);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.fm-brand:hover {
+    color: var(--fm-coral-dark) !important;
+}
+
+.fm-nav-link {
+    font-family: var(--fm-font-body);
+    font-weight: 600;
+    font-size: 0.94rem;
+    color: var(--fm-ink-soft) !important;
+    border-radius: var(--fm-radius-pill);
+    padding: 0.5rem 0.9rem !important;
+    transition: background var(--fm-transition), color var(--fm-transition);
+}
+
+    .fm-nav-link:hover,
+    .fm-nav-link:focus-visible {
+        background: var(--fm-coral-tint);
+        color: var(--fm-coral-dark) !important;
+    }
+
+    .fm-nav-link.active {
+        background: var(--fm-coral-tint);
+        color: var(--fm-coral) !important;
+    }
+
+.fm-navbar-toggler {
+    border: 1px solid var(--fm-border) !important;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+}
+
+    .fm-navbar-toggler:focus {
+        box-shadow: 0 0 0 3px var(--fm-coral-tint) !important;
+    }
+
+.fm-greeting {
+    color: var(--fm-ink-soft);
+    font-size: 0.88rem;
+}
+
+    .fm-greeting strong {
+        color: var(--fm-ink);
+    }
+
+.fm-role-badge {
+    font-family: var(--fm-font-body);
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.18rem 0.5rem;
+    border-radius: var(--fm-radius-pill);
+    margin-left: 0.35rem;
+}
+
+    .fm-role-badge.fm-role-admin {
+        background: var(--fm-coral-tint);
+        color: var(--fm-coral-dark);
+    }
+
+    .fm-role-badge.fm-role-staff {
+        background: var(--fm-gold-tint);
+        color: #7A5200;
+    }
+
+    .fm-role-badge.fm-role-student {
+        background: #E7F4E8;
+        color: var(--fm-veg);
+    }
+
+.fm-btn-outline {
+    border: 1.5px solid var(--fm-coral);
+    color: var(--fm-coral);
+    background: transparent;
+    font-weight: 600;
+    border-radius: var(--fm-radius-pill);
+    padding: 0.4rem 1.1rem;
+    font-size: 0.88rem;
+    transition: background var(--fm-transition), color var(--fm-transition);
+}
+
+    .fm-btn-outline:hover,
+    .fm-btn-outline:focus-visible {
+        background: var(--fm-coral);
+        color: #fff;
+    }
+
+/* Cart icon — wire up once a Cart controller/count is available.
+   Markup for it is included, commented, in _Layout.cshtml. */
+.fm-cart-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--fm-border);
+    background: #fff;
+    color: var(--fm-ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background var(--fm-transition), border-color var(--fm-transition);
+}
+
+    .fm-cart-btn:hover {
+        background: var(--fm-coral-tint);
+        border-color: var(--fm-coral-tint);
+    }
+
+.fm-cart-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--fm-coral);
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #fff;
+}

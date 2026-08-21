@@ -1,0 +1,209 @@
+﻿@model IEnumerable<FeedMe.Models.MenuItem>
+@{
+    ViewData["Title"] = "Home Page";
+    var hotMeals = ViewBag.HotMeals as List<FeedMe.Models.MenuItem> ?? new List<FeedMe.Models.MenuItem>();
+}
+
+@* ==========================================================================
+   Requires wwwroot/css/canteen-theme.css linked in _Layout.cshtml <head>.
+   Uses the SAME @Model / ViewBag.HotMeals your controller already sends —
+   no controller or route changes needed.
+   ========================================================================== *@
+
+<!-- ============================= HERO / CHALKBOARD ============================= -->
+<div class="fm-hero text-white p-4 p-md-5 mb-5">
+    <div class="row align-items-center position-relative" style="z-index: 2;">
+
+        <!-- Left: Welcome copy & CTA -->
+        <div class="col-lg-6 mb-4 mb-lg-0 fm-hero-copy">
+            <span class="fm-hero-eyebrow mb-3 d-inline-flex">Today's Board</span>
+            <h1 class="fm-hero-title display-5 mt-3 mb-3">Welcome to TCMIT Canteen</h1>
+            <p class="fm-hero-lead lead mb-4">
+                Fresh, hot meals prepared daily. Order online and pick up seamlessly during your break.
+            </p>
+            <a asp-controller="Home" asp-action="Menu" class="fm-btn-primary d-inline-flex align-items-center gap-2">
+                Explore Menu
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Right: Rotating hot meals, pinned-photo style -->
+        <div class="col-lg-6">
+            @if (hotMeals.Any())
+            {
+                <div class="fm-meal-stack" id="hotMealStack" role="region" aria-label="Featured hot meals" aria-live="polite">
+                    @for (int i = 0; i < hotMeals.Count; i++)
+                    {
+                        var item = hotMeals[i];
+                        <div class="fm-stack-item" data-index="@i" tabindex="-1">
+                            <div class="fm-pin-card position-relative d-flex align-items-center gap-3 h-100">
+
+                                <div class="position-relative flex-shrink-0">
+                                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "/images/placeholder.jpg" : item.ImageUrl)"
+                                         alt="@item.Name"
+                                         class="fm-pin-photo" />
+                                    <span class="fm-badge-hot position-absolute top-0 start-0 m-1">
+                                        🔥 Hot
+                                    </span>
+                                </div>
+
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <span class="fm-eyebrow mb-2">@item.Category?.Name</span>
+                                    <h4 class="fm-display fw-semibold text-white text-truncate mb-1 mt-2">@item.Name</h4>
+                                    <p class="text-light opacity-75 small mb-2 text-truncate" style="max-width: 220px;">@item.Description</p>
+                                    <div class="fm-price" style="color:#fff;">
+                                        <span class="fm-price-icon"><i class="bi bi-currency-dollar"></i></span>
+                                        Rs. @item.Price.ToString("F2")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (hotMeals.Count > 1)
+                {
+                    <div class="fm-stack-dots" role="tablist" aria-label="Choose featured meal">
+                        @for (int i = 0; i < hotMeals.Count; i++)
+                        {
+                            <button type="button" class="fm-stack-dot" data-index="@i" aria-label="Show featured meal @(i + 1)"></button>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="p-4 text-center rounded-4" style="background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.2);">
+                    <p class="mb-0 text-light opacity-75">No hot meals currently featured today.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ============================= TODAY'S SPECIALS ============================= -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fm-section-title m-0">Today's Specials</h3>
+    <a asp-controller="Home" asp-action="Menu" class="fm-section-link">
+        Explore Full Menu &rarr;
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <!-- Empty state -->
+    <div class="text-center py-5 my-3" style="border: 1px dashed var(--fm-border); border-radius: var(--fm-radius-lg);">
+        <i class="bi bi-egg-fried" style="font-size: 2rem; color: var(--fm-gold);"></i>
+        <p class="fm-food-desc mt-3 mb-0">No specials are up on the board right now — check back soon.</p>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <a asp-controller="Home" asp-action="Menu" class="text-decoration-none d-block h-100">
+                    <div class="fm-food-card">
+                        <div class="fm-food-img-wrap">
+                            <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "/images/placeholder.jpg" : item.ImageUrl)"
+                                 alt="@item.Name" loading="lazy" />
+
+                            @* Optional: uncomment once MenuItem exposes an IsAvailable bool.
+                               Keeping it out for now so the view compiles against your current model.
+                            @if (!item.IsAvailable)
+                            {
+                                <div class="fm-unavailable-badge">Sold out</div>
+                            }
+                            *@
+                        </div>
+
+                        <div class="fm-food-body">
+                            <span class="fm-eyebrow mb-2">@item.Category?.Name</span>
+
+                            <h5 class="fm-food-name mt-2">@item.Name</h5>
+                            <p class="fm-food-desc mb-0">@item.Description</p>
+
+                            <div class="fm-food-footer">
+                                <span class="fm-price">
+                                    <span class="fm-price-icon"><i class="bi bi-currency-dollar"></i></span>
+                                    Rs. @item.Price.ToString("F2")
+                                </span>
+                                <span class="fm-btn-primary fm-btn-sm">
+                                    Order Now
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Fanned featured-meal stack: rotates automatically, no arrow buttons.
+        // Clicking a side card or a dot jumps straight to that meal.
+        (function() {
+            var stack = document.getElementById('hotMealStack');
+            if (!stack) return;
+
+            var items = Array.prototype.slice.call(stack.querySelectorAll('.fm-stack-item'));
+            var dots = Array.prototype.slice.call(document.querySelectorAll('.fm-stack-dot'));
+            var n = items.length;
+            if (n === 0) return;
+
+            var current = 0;
+            var timer = null;
+
+            function positionClass(diff) {
+                switch (diff) {
+                    case 0: return 'fm-stack-pos-center';
+                    case 1: return 'fm-stack-pos-r1';
+                    case -1: return 'fm-stack-pos-l1';
+                    case 2: return 'fm-stack-pos-r2';
+                    case -2: return 'fm-stack-pos-l2';
+                    default: return 'fm-stack-pos-hidden';
+                }
+            }
+
+            function render() {
+                items.forEach(function(el, i) {
+                    var raw = (i - current) % n;
+                    if (raw > n / 2) raw -= n;
+                    if (raw < -n / 2) raw += n;
+                    el.className = 'fm-stack-item ' + positionClass(raw);
+                });
+                dots.forEach(function(d, i) {
+                    d.classList.toggle('active', i === current);
+                });
+            }
+
+            function goTo(i) {
+                current = ((i % n) + n) % n;
+                render();
+                restart();
+            }
+
+            function restart() {
+                if (timer) clearInterval(timer);
+                if (n > 1) {
+                    timer = setInterval(function() { goTo(current + 1); }, 3500);
+                }
+            }
+
+            items.forEach(function(el, i) {
+                el.addEventListener('click', function() {
+                    if (i !== current) goTo(i);
+                });
+            });
+            dots.forEach(function(d, i) {
+                d.addEventListener('click', function() { goTo(i); });
+            });
+
+            render();
+            restart();
+        })();
+    </script>
+}

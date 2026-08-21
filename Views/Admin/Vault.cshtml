@@ -1,0 +1,358 @@
+﻿@using FeedMe.ViewModels
+@model List<UserWithRoleViewModel>
+@{
+    ViewData["Title"] = "Token Vault Treasury - Admin";
+    var adminBalance = ViewBag.AdminTokenBalance as decimal? ?? 0m;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<style>
+    header, footer, nav.navbar, .navbar {
+        display: none !important;
+    }
+
+    html, body {
+        background-color: #f8fafc !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #0f172a;
+        z-index: 1000;
+    }
+
+    .admin-main-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        padding: 32px 40px !important;
+        box-sizing: border-box;
+    }
+</style>
+
+<div class="d-flex">
+    <!-- SIDEBAR -->
+    <div class="admin-sidebar text-white p-3 d-flex flex-column justify-content-between">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; min-width: 42px;">
+                    <i class="bi bi-cup-hot-fill text-white fs-5"></i>
+                </div>
+                <div class="text-truncate">
+                    <h6 class="fw-bold m-0 text-white text-truncate" style="font-size: 0.95rem;">TCMIT CANTEEN</h6>
+                    <span class="text-danger small fw-semibold" style="font-size: 0.75rem;">Admin Portal</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills flex-column gap-2">
+                <li class="nav-item">
+                    <a asp-action="Dashboard" class="nav-link @(currentAction == "Dashboard" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-grid-fill me-2 fs-5 align-middle"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Vault" class="nav-link @(currentAction == "Vault" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-safe2-fill me-2 fs-5 align-middle"></i> Token Vault
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Statements" class="nav-link @(currentAction == "Statements" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-file-earmark-text-fill me-2 fs-5 align-middle"></i> Statements
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Inventory" class="nav-link @(currentAction == "Inventory" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-box-seam-fill me-2 fs-5 align-middle"></i> Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Menu" class="nav-link @(currentAction == "Menu" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-journal-text me-2 fs-5 align-middle"></i> Menu Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Orders" class="nav-link @(currentAction == "Orders" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-cart-check-fill me-2 fs-5 align-middle"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Slots" class="nav-link @(currentAction == "Slots" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-clock-fill me-2 fs-5 align-middle"></i> Time Slots
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Users" class="nav-link @(currentAction == "Users" ? "active bg-danger text-white fw-bold" : "text-white-50 fw-semibold") rounded-3 py-2 px-3">
+                        <i class="bi bi-people-fill me-2 fs-5 align-middle"></i> Users
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="pt-3 border-top border-secondary border-opacity-25">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn text-danger w-100 text-start fw-bold p-0 border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-left me-2 fs-5 align-middle"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="admin-main-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- VAULT HERO RESERVE CARD -->
+        <div class="card border-0 shadow-sm rounded-4 bg-dark text-white p-4 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <span class="text-warning small fw-bold text-uppercase"><i class="bi bi-shield-lock-fill me-1"></i> Admin Central Vault Reserve</span>
+                    <h1 class="fw-bold text-warning m-0 mt-1"><i class="bi bi-coin me-2"></i>@adminBalance.ToString("F2") Texas Tokens</h1>
+                </div>
+                <div>
+                    <a asp-action="Statements" class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold small">
+                        <i class="bi bi-journal-text me-1"></i> View Statements
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- MINT / DEPOSIT TOKENS INLINE CONTAINER -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+            <div class="mb-3">
+                <h5 class="fw-bold text-dark m-0"><i class="bi bi-plus-circle-fill text-warning me-2"></i>Mint Tokens to Central Vault</h5>
+                <p class="text-muted small m-0 mt-1">Inject fresh currency into the Admin Central Vault reserve by providing authorization details.</p>
+            </div>
+            <form asp-action="DepositToVault" method="post" class="row g-3 align-items-end">
+                @Html.AntiForgeryToken()
+                <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold text-dark small mb-1">Token Amount</label>
+                    <input type="number" step="0.01" min="1" name="amount" class="form-control rounded-3 py-2" placeholder="e.g. 10000" required />
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold text-dark small mb-1">Admin Password / Security Key</label>
+                    <input type="password" name="securityKey" class="form-control rounded-3 py-2" placeholder="Enter password or key" required />
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-warning text-dark fw-bold rounded-3 py-2 w-100">
+                        <i class="bi bi-shield-check me-1"></i> Deposit
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- USER DIRECTORY, FILTER, SEARCH & PAGINATED TABLE -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-people-fill text-primary me-2"></i>User Vault Directory</h5>
+                    <p class="text-muted small m-0">Search and filter accounts to perform direct top-ups.</p>
+                </div>
+
+                <!-- ROLE FILTERS -->
+                <div class="btn-group rounded-pill bg-light p-1 border" role="group" id="roleFilterGroup">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold filter-btn px-3 active" data-role="All">All Users</button>
+                    <button type="button" class="btn btn-sm btn-light rounded-pill fw-bold filter-btn px-3" data-role="Student">Students</button>
+                    <button type="button" class="btn btn-sm btn-light rounded-pill fw-bold filter-btn px-3" data-role="Staff">Staff</button>
+                </div>
+            </div>
+
+            <!-- SEARCH BAR -->
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="userSearchInput" class="form-control border-start-0 bg-light" placeholder="Search by name or email address..." />
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="userVaultTable">
+                    <thead class="table-light rounded-3">
+                        <tr>
+                            <th class="border-0 text-secondary small fw-bold text-uppercase">User Details</th>
+                            <th class="border-0 text-secondary small fw-bold text-uppercase">Role</th>
+                            <th class="border-0 text-secondary small fw-bold text-uppercase">Vault Balance</th>
+                            <th class="border-0 text-secondary small fw-bold text-uppercase text-end">Quick Top-Up Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any(u => u.Role != "Admin"))
+                        {
+                            <tr id="noUsersRow">
+                                <td colspan="4" class="text-center text-muted py-4">No student or staff accounts found.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                if (item.Role == "Admin") continue;
+
+                                <tr class="user-row" data-role="@item.Role" data-search="@((item.User.FullName ?? "") + " " + (item.User.Email ?? ""))">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; min-width: 40px;">
+                                                @((!string.IsNullOrEmpty(item.User.FullName) ? item.User.FullName[0].ToString() : "U").ToUpper())
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold text-dark m-0 user-name">@(item.User.FullName ?? "N/A")</h6>
+                                                <span class="text-muted small user-email">@item.User.Email</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (item.Role == "Staff")
+                                        {
+                                            <span class="badge bg-info text-dark rounded-pill px-3 py-1 fw-bold">Staff</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3 py-1 fw-bold">Student</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark fs-6"><i class="bi bi-coin text-warning me-1"></i>@item.User.TokenBalance.ToString("F2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form asp-action="TopUpTokens" method="post" class="d-inline-flex gap-2 justify-content-end align-items-center">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@item.User.Id" />
+                                            <div class="input-group input-group-sm" style="width: 170px;">
+                                                <span class="input-group-text bg-light border-end-0 fw-bold">₮</span>
+                                                <input type="number" step="0.01" min="1" name="amount" class="form-control form-control-sm border-start-0" placeholder="Amount" required />
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-success fw-bold rounded-3 px-3 py-1">
+                                                <i class="bi bi-plus-lg me-1"></i> Top Up
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            <tr id="notFoundRow" style="display: none;">
+                                <td colspan="4" class="text-center text-muted py-4">No matching accounts found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- LOAD MORE BUTTON & COUNTER -->
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <span id="userCountSummary" class="text-muted small fw-semibold">Showing 0 of 0 users</span>
+                <button type="button" id="loadMoreBtn" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold">
+                    <i class="bi bi-arrow-down-circle me-1"></i> Load More (10)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CLIENT-SIDE FILTERING & PAGINATION SCRIPT -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const pageSize = 10;
+        let visibleCount = pageSize;
+        let currentRole = "All";
+        let searchQuery = "";
+
+        const searchInput = document.getElementById("userSearchInput");
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        const loadMoreBtn = document.getElementById("loadMoreBtn");
+        const userRows = Array.from(document.querySelectorAll(".user-row"));
+        const notFoundRow = document.getElementById("notFoundRow");
+        const userCountSummary = document.getElementById("userCountSummary");
+
+        function applyFilters() {
+            let matchingRows = userRows.filter(row => {
+                const rowRole = row.getAttribute("data-role");
+                const searchData = row.getAttribute("data-search").toLowerCase();
+
+                const matchesRole = (currentRole === "All" || rowRole === currentRole);
+                const matchesSearch = searchData.includes(searchQuery);
+
+                return matchesRole && matchesSearch;
+            });
+
+            // Hide all rows initially
+            userRows.forEach(row => row.style.display = "none");
+
+            // Show up to visibleCount of matching rows
+            const toShow = matchingRows.slice(0, visibleCount);
+            toShow.forEach(row => row.style.display = "");
+
+            // Handle "No results found"
+            if (notFoundRow) {
+                notFoundRow.style.display = (matchingRows.length === 0) ? "" : "none";
+            }
+
+            // Update Summary Text
+            const currentShown = Math.min(visibleCount, matchingRows.length);
+            userCountSummary.innerText = `Showing ${currentShown} of ${matchingRows.length} users`;
+
+            // Toggle "Load More" button visibility
+            if (visibleCount < matchingRows.length) {
+                loadMoreBtn.style.display = "inline-block";
+            } else {
+                loadMoreBtn.style.display = "none";
+            }
+        }
+
+        // Search Input Event
+        searchInput.addEventListener("input", function(e) {
+            searchQuery = e.target.value.toLowerCase().trim();
+            visibleCount = pageSize;
+            applyFilters();
+        });
+
+        // Filter Buttons Event
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", function() {
+                filterBtns.forEach(b => {
+                    b.classList.remove("btn-primary", "active");
+                    b.classList.add("btn-light");
+                });
+
+                this.classList.remove("btn-light");
+                this.classList.add("btn-primary", "active");
+
+                currentRole = this.getAttribute("data-role");
+                visibleCount = pageSize;
+                applyFilters();
+            });
+        });
+
+        // Load More Event
+        loadMoreBtn.addEventListener("click", function() {
+            visibleCount += pageSize;
+            applyFilters();
+        });
+
+        // Initial Run
+        applyFilters();
+    });
+</script>

@@ -1,0 +1,146 @@
+﻿@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FeedMe Admin</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <style>
+            body {
+                overflow: hidden; /* Prevents whole page outer scroll */
+                background-color: #f8f9fa;
+            }
+
+            /* Fixed full-height sidebar */
+            .admin-sidebar {
+                width: 250px;
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                background-color: #0b132b;
+                color: #fff;
+                z-index: 1000;
+            }
+
+                .admin-sidebar .nav-link {
+                    color: #a0aec0;
+                    padding: 10px 16px;
+                    font-weight: 500;
+                    transition: all 0.2s ease-in-out;
+                }
+
+                    .admin-sidebar .nav-link:hover {
+                        color: #ffffff;
+                        background-color: rgba(255, 255, 255, 0.08);
+                    }
+
+                    .admin-sidebar .nav-link.active {
+                        color: #ffffff !important;
+                        background-color: #dc3545 !important; /* bg-danger styling */
+                        font-weight: 700;
+                    }
+
+            /* Main Content Container - Scrollable independent of sidebar */
+            .admin-main-content {
+                margin-left: 250px; /* Width of sidebar */
+                height: 100vh;
+                overflow-y: auto; /* Allows form to scroll up/down cleanly */
+                padding: 2rem;
+            }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- FIXED SIDEBAR -->
+        <div class="admin-sidebar d-flex flex-column justify-content-between p-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-4 px-2 pt-2">
+                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <i class="bi bi-cup-hot-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-white">TCMIT CANTEEN</h6>
+                        <small class="text-danger" style="font-size: 0.75rem;">Admin Portal</small>
+                    </div>
+                </div>
+
+                <ul class="nav nav-pills flex-column gap-1">
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Dashboard"
+                           class="nav-link rounded-3 @(currentAction == "Dashboard" ? "active" : "")">
+                            <i class="bi bi-grid-fill me-2 fs-5 align-middle"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Vault"
+                           class="nav-link rounded-3 @(currentAction == "Vault" ? "active" : "")">
+                            <i class="bi bi-safe-fill me-2 fs-5 align-middle"></i> Token Vault
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Statements"
+                           class="nav-link rounded-3 @(currentAction == "Statements" ? "active" : "")">
+                            <i class="bi bi-file-earmark-text-fill me-2 fs-5 align-middle"></i> Statements
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Inventory"
+                           class="nav-link rounded-3 @(currentAction == "Inventory" ? "active" : "")">
+                            <i class="bi bi-box-seam-fill me-2 fs-5 align-middle"></i> Inventory
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Menu"
+                           class="nav-link rounded-3 @(currentAction == "Menu" ? "active" : "")">
+                            <i class="bi bi-list-task me-2 fs-5 align-middle"></i> Menu Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Orders"
+                           class="nav-link rounded-3 @(currentAction == "Orders" ? "active" : "")">
+                            <i class="bi bi-receipt me-2 fs-5 align-middle"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Slots"
+                           class="nav-link rounded-3 @(currentAction == "Slots" ? "active" : "")">
+                            <i class="bi bi-clock-fill me-2 fs-5 align-middle"></i> Time Slots
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Admin" asp-action="Users"
+                           class="nav-link rounded-3 @(currentAction == "Users" ? "active" : "")">
+                            <i class="bi bi-people-fill me-2 fs-5 align-middle"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="px-2 pb-2 border-top border-secondary border-opacity-25 pt-3">
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-link text-danger nav-link text-start p-0 border-0 fw-semibold w-100">
+                        <i class="bi bi-box-arrow-right me-2 fs-5 align-middle"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SCROLLABLE MAIN CONTENT AREA -->
+        <main class="admin-main-content w-100">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

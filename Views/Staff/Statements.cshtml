@@ -1,0 +1,158 @@
+﻿@using FeedMe.Models
+@model List<TokenTransaction>
+@{
+    ViewData["Title"] = "Token Statement - Staff Portal";
+    var user = ViewBag.User as AppUser;
+    string viewType = ViewBag.ViewType as string ?? "all";
+    int selectedMonth = ViewBag.SelectedMonth ?? DateTime.Today.Month;
+    int selectedYear = ViewBag.SelectedYear ?? DateTime.Today.Year;
+}
+
+<style>
+    header, footer, nav.navbar, .navbar {
+        display: none !important;
+    }
+
+    html, body {
+        background-color: #f8fafc !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #0f172a;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    .admin-main-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 250px !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        padding: 32px 40px !important;
+        box-sizing: border-box !important;
+        background-color: #f8fafc !important;
+    }
+</style>
+
+<div class="d-flex">
+    <!-- STAFF SIDEBAR -->
+    <div class="admin-sidebar text-white p-3 d-flex flex-column justify-content-between">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; min-width: 42px;">
+                    <i class="bi bi-cup-hot-fill text-white fs-5"></i>
+                </div>
+                <div class="text-truncate">
+                    <h6 class="fw-bold m-0 text-white text-truncate" style="font-size: 0.95rem;">TCMIT CANTEEN</h6>
+                    <span class="text-primary small fw-semibold" style="font-size: 0.75rem;">Staff Portal</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills flex-column gap-2">
+                <li class="nav-item">
+                    <a asp-action="Dashboard" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-grid-fill me-2 fs-5 align-middle"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="FullMenu" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-journal-text me-2 fs-5 align-middle"></i> Canteen Menu</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Orders" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-clock-history me-2 fs-5 align-middle"></i> My Orders</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Vault" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-safe-fill me-2 fs-5 align-middle"></i> Token Vault</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Statements" class="nav-link active bg-primary fw-bold rounded-3 py-2 px-3"><i class="bi bi-file-earmark-text-fill me-2 fs-5 align-middle"></i> Statement</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Notifications" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-bell-fill me-2 fs-5 align-middle"></i> Notifications</a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Profile" class="nav-link text-secondary fw-semibold rounded-3 py-2 px-3 text-white-50"><i class="bi bi-person-circle me-2 fs-5 align-middle"></i> Profile</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="pt-3 border-top border-secondary border-opacity-25">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn text-danger w-100 text-start fw-bold p-0 border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-left me-2 fs-5 align-middle"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <div class="admin-main-content">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div>
+                <h2 class="fw-bold text-dark m-0">Staff Token Statements</h2>
+                <p class="text-muted small mt-1 mb-0">Detailed statement log of your top-ups and canteen expenses.</p>
+            </div>
+            <div>
+                <a asp-action="ExportStatementCsv" asp-route-viewType="@viewType" asp-route-selectedMonth="@selectedMonth" asp-route-selectedYear="@selectedYear" class="btn btn-outline-primary fw-bold rounded-pill px-4 py-2 shadow-sm bg-white">
+                    <i class="bi bi-download me-2"></i> Download Statement (.CSV)
+                </a>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden w-100 mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 w-100">
+                    <thead class="bg-light border-bottom text-uppercase text-muted" style="font-size: 0.75rem;">
+                        <tr>
+                            <th class="ps-4 py-3">Tx ID</th>
+                            <th class="py-3">Timestamp</th>
+                            <th class="py-3">Type</th>
+                            <th class="py-3">Description</th>
+                            <th class="pe-4 py-3 text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">No transaction statements found.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var tx in Model)
+                            {
+                                bool isCredit = tx.ReceiverUserId == user?.Id;
+                                <tr>
+                                    <td class="ps-4 py-3 fw-bold text-dark">#TX-@tx.Id.ToString("D5")</td>
+                                    <td class="py-3 small text-muted">@tx.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td class="py-3">
+                                        <span class="badge rounded-pill px-3 py-2 fw-bold @(isCredit ? "bg-success-subtle text-success border border-success-subtle" : "bg-danger-subtle text-danger border border-danger-subtle")">
+                                            @(isCredit ? "Top-Up Credit" : "Meal Expense")
+                                        </span>
+                                    </td>
+                                    <td class="py-3 small text-muted">@tx.Description</td>
+                                    <!-- UPDATED: Expense tokens now display in red (text-danger) -->
+                                    <td class="pe-4 py-3 text-end fw-bold @(isCredit ? "text-success" : "text-danger")">
+                                        @(isCredit ? "+" : "-")@tx.Amount Tokens
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
