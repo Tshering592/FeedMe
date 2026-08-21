@@ -24,9 +24,28 @@
         position: fixed;
         top: 0;
         left: 0;
-        background-color: #0f172a;
+        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, #2a221b 0%, #17110d 70%, #0a0705 100%);
+        border-right: 1px solid #3d2e24;
         z-index: 1000;
         overflow-y: auto;
+    }
+
+    .admin-sidebar .nav-link {
+        color: rgba(255,255,255,0.85) !important;
+        font-family: var(--fm-font-body);
+        font-weight: 500;
+    }
+
+    .admin-sidebar .nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(255,255,255,0.08) !important;
+    }
+
+    .admin-sidebar .nav-link.active,
+    .admin-sidebar .nav-link.bg-danger {
+        color: #ffffff !important;
+        font-weight: 700;
     }
 
     .admin-main-content {
