@@ -101,7 +101,7 @@ namespace FeedMe.Controllers
         // POST: /Student/PlaceMultiOrder
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceMultiOrder(CartOrderViewModel model)
+        public async Task<IActionResult> PlaceMultiOrder(CartOrderViewModel model, int? categoryId)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -114,13 +114,13 @@ namespace FeedMe.Controllers
             if (validItems == null || !validItems.Any())
             {
                 TempData["Error"] = "Please select at least one item with quantity greater than 0.";
-                return RedirectToAction(nameof(FullMenu));
+                return RedirectToAction(nameof(FullMenu), new { categoryId });
             }
 
             if (model.TimeSlotId <= 0)
             {
                 TempData["Error"] = "Please select a valid pickup time slot.";
-                return RedirectToAction(nameof(FullMenu));
+                return RedirectToAction(nameof(FullMenu), new { categoryId });
             }
 
             decimal grandTotal = 0m;
@@ -134,7 +134,7 @@ namespace FeedMe.Controllers
                     if (menuItem.StockQuantity.HasValue && menuItem.StockQuantity.Value < selection.Quantity)
                     {
                         TempData["Error"] = $"Insufficient stock for '{menuItem.Name}'. Only {menuItem.StockQuantity.Value} left!";
-                        return RedirectToAction(nameof(FullMenu));
+                        return RedirectToAction(nameof(FullMenu), new { categoryId });
                     }
 
                     decimal itemTotal = menuItem.Price * selection.Quantity;
@@ -158,7 +158,7 @@ namespace FeedMe.Controllers
             if (user.TokenBalance < grandTotal)
             {
                 TempData["Error"] = $"Insufficient balance! Required: {grandTotal:N0} Tokens. Your Current Balance: {user.TokenBalance:N0} Tokens. Please top up your wallet.";
-                return RedirectToAction(nameof(FullMenu));
+                return RedirectToAction(nameof(FullMenu), new { categoryId });
             }
 
             // CREATE ORDER RECORD
@@ -209,7 +209,11 @@ namespace FeedMe.Controllers
             string notificationMsg = $"New Order #{order.Id:D3} received from {order.StudentName}!";
             await _notificationService.NotifyRoleAsync("Kitchen", notificationMsg, "NewOrder", order.Id);
             await _notificationService.NotifyRoleAsync("Admin", notificationMsg, "NewOrder", order.Id);
-            return RedirectToAction(nameof(Orders));
+
+            TempData["Success"] = $"Order #{order.Id:D3} placed successfully! {grandTotal:N0} Tokens paid.";
+
+            // Stay on the Full Menu page instead of navigating away to Orders.
+            return RedirectToAction(nameof(FullMenu), new { categoryId });
         }
 
         // GET: /Student/Orders
@@ -297,7 +301,7 @@ namespace FeedMe.Controllers
             return View(statementList);
         }
 
-     
+
         [HttpGet]
         public async Task<IActionResult> ExportStatementCsv(string? viewType, int? selectedMonth, int? selectedYear)
         {

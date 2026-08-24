@@ -290,7 +290,7 @@ namespace FeedMe.Controllers
         // 8. POST: /Admin/TogglePublish/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TogglePublish(int id)
+        public async Task<IActionResult> TogglePublish(int id, string? returnUrl = null)
         {
             var item = await _context.MenuItems.FindAsync(id);
             if (item != null)
@@ -298,6 +298,11 @@ namespace FeedMe.Controllers
                 item.IsPublished = !item.IsPublished;
                 await _context.SaveChangesAsync();
                 TempData["Success"] = item.IsPublished ? $"{item.Name} published to live menu." : $"{item.Name} unpublished from menu.";
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
             }
 
             string? referer = Request.Headers["Referer"].ToString();

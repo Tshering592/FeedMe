@@ -114,6 +114,7 @@
                             <td class="py-3">
                                 <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@Url.Action("Menu")" />
                                     <button type="submit" class="btn btn-sm border-0 p-0 d-flex align-items-center gap-2" title="Click to Unpublish">
                                         <span class="badge rounded-pill px-3 py-2 fw-bold bg-success-subtle text-success border border-success-subtle">
                                             <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i> Available
@@ -130,6 +131,7 @@
                                     </a>
                                     <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
+                                        <input type="hidden" name="returnUrl" value="@Url.Action("Menu")" />
                                         <button type="submit" class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm text-danger" title="Unpublish from Menu">
                                             <i class="bi bi-eye-slash"></i>
                                         </button>
@@ -191,6 +193,7 @@
                                         <td class="text-end pe-3">
                                             <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
+                                                <input type="hidden" name="returnUrl" value="@Url.Action("Menu")" />
                                                 <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
                                                     + Publish to Menu
                                                 </button>
