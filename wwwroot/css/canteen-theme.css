@@ -411,6 +411,37 @@ a {
     }
 }
 
+/* Make the meal stack use and center within the FULL hero width,
+   regardless of the column it's sitting in. Desktop only — mobile
+   media query below is untouched. */
+@media (min-width: 768px) {
+    .fm-hero .col-lg-6:has(.fm-meal-stack) {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .fm-meal-stack {
+        max-width: 640px;
+        height: 220px;
+    }
+
+    .fm-stack-pos-r1 {
+        transform: translateX(72%) scale(0.82);
+    }
+
+    .fm-stack-pos-l1 {
+        transform: translateX(-72%) scale(0.82);
+    }
+
+    .fm-stack-pos-r2 {
+        transform: translateX(128%) scale(0.66);
+    }
+
+    .fm-stack-pos-l2 {
+        transform: translateX(-128%) scale(0.66);
+    }
+}
+
 /* --------------------------------------------------------------------
    Section headers
    -------------------------------------------------------------------- */

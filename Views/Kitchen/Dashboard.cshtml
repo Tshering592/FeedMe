@@ -82,14 +82,14 @@
                 <h5 class="fw-bold m-0"><i class="bi bi-list-check me-2"></i>Live Kitchen Orders</h5>
 
                 <!-- FILTER ICON BUTTONS -->
-                <div class="btn-group" role="group" aria-label="Order Filters">
-                    <a asp-action="Dashboard" asp-route-filter="all" class="btn btn-sm @(currentFilter == "all" ? "btn-primary" : "btn-outline-secondary") rounded-pill me-1 px-3">
+                <div class="d-flex flex-wrap gap-2" role="group" aria-label="Order Filters">
+                    <a asp-action="Dashboard" asp-route-filter="all" class="btn btn-sm @(currentFilter == "all" ? "btn-primary" : "btn-outline-secondary") rounded-pill px-3">
                         <i class="bi bi-list-task me-1"></i> Live Order Queue
                     </a>
-                    <a asp-action="Dashboard" asp-route-filter="preparing" class="btn btn-sm @(currentFilter == "preparing" ? "btn-warning text-dark" : "btn-outline-warning text-dark") rounded-pill me-1 px-3">
+                    <a asp-action="Dashboard" asp-route-filter="preparing" class="btn btn-sm @(currentFilter == "preparing" ? "btn-warning text-dark" : "btn-outline-warning text-dark") rounded-pill px-3">
                         <i class="bi bi-hourglass-split me-1"></i> Preparing
                     </a>
-                    <a asp-action="Dashboard" asp-route-filter="completed" class="btn btn-sm @(currentFilter == "completed" ? "btn-success" : "btn-outline-success") rounded-pill me-1 px-3">
+                    <a asp-action="Dashboard" asp-route-filter="completed" class="btn btn-sm @(currentFilter == "completed" ? "btn-success" : "btn-outline-success") rounded-pill px-3">
                         <i class="bi bi-check-circle me-1"></i> Completed
                     </a>
                     <a asp-action="Dashboard" asp-route-filter="cancelled" class="btn btn-sm @(currentFilter == "cancelled" ? "btn-danger" : "btn-outline-danger") rounded-pill px-3">

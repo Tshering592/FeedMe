@@ -17,6 +17,7 @@
         margin: 0 !important;
         padding: 0 !important;
         height: 100vh !important;
+        height: 100dvh !important;
         overflow: hidden !important;
     }
 
@@ -24,31 +25,13 @@
     .admin-sidebar {
         width: 250px;
         height: 100vh;
+        height: 100dvh;
         position: fixed;
         top: 0;
         left: 0;
-        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 50%, #2a221b 0%, #17110d 70%, #0a0705 100%);
-        border-right: 1px solid #3d2e24;
+        background-color: #0f172a;
         z-index: 1000;
         overflow-y: auto;
-    }
-
-    .admin-sidebar .nav-link {
-        color: rgba(255,255,255,0.85) !important;
-        font-family: var(--fm-font-body);
-        font-weight: 500;
-    }
-
-    .admin-sidebar .nav-link:hover {
-        color: #ffffff !important;
-        background: rgba(255,255,255,0.08) !important;
-    }
-
-    .admin-sidebar .nav-link.active,
-    .admin-sidebar .nav-link.bg-danger {
-        color: #ffffff !important;
-        font-weight: 700;
     }
 
     /* Absolute Viewport Anchoring: Fills screen edge-to-edge from sidebar */
@@ -69,7 +52,89 @@
             width: 100% !important;
             max-width: 100% !important;
         }
+
+    /* Slim top bar shown only on mobile, with a hamburger button to open the drawer */
+    .mobile-topbar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background-color: #0f172a;
+        z-index: 1030;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+    }
+
+    .mobile-nav-toggle {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 4px;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+    }
+
+        .sidebar-backdrop.show {
+            display: block;
+        }
+
+    /* Responsive: sidebar becomes a sliding off-canvas drawer instead of squeezing content */
+    @@media (max-width: 900px) {
+        .mobile-topbar {
+            display: flex;
+        }
+
+        .admin-sidebar {
+            width: 260px !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1050;
+            flex-direction: column !important;
+            padding: 16px !important;
+            overflow-y: auto !important;
+        }
+
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .admin-sidebar .nav {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+        .admin-main-content {
+            left: 0 !important;
+            top: 56px !important;
+            padding: 16px 20px !important;
+        }
+    }
 </style>
+
+<!-- MOBILE TOP BAR (hamburger + brand) -->
+<div class="mobile-topbar">
+    <button type="button" class="mobile-nav-toggle" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+    </button>
+    <span class="fw-bold text-white">TCMIT CANTEEN</span>
+</div>
+<div class="sidebar-backdrop"></div>
 
 <div class="d-flex">
     <!-- STUDENT SIDEBAR -->
@@ -185,28 +250,72 @@
 
 @section Scripts {
     <script>
-        // Request System Notification Permission for Device Popups
         const btnPush = document.getElementById('btnEnablePush');
-        if (btnPush) {
-            btnPush.addEventListener('click', function() {
-                if (!("Notification" in window)) {
-                    alert("This browser does not support desktop/mobile notifications.");
-                    return;
-                }
 
-                Notification.requestPermission().then(function(permission) {
-                    if (permission === "granted") {
-                        new Notification("TCMIT Canteen Portal", {
-                            body: "Device notifications enabled! You will now receive order alerts even when the browser is closed.",
-                            icon: "/images/canteen-icon.png"
-                        });
-                        btnPush.classList.replace("btn-outline-danger", "btn-success");
-                        btnPush.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Device Popups Active';
-                    } else {
-                        alert("Notification permission denied. Please enable notifications in your browser settings.");
-                    }
-                });
-            });
+        // Reflect the browser's ACTUAL current permission on every page load,
+        // instead of always assuming "not enabled". Without this, the button
+        // resets to its default state on every navigation even though the
+        // permission the user already granted is still active.
+        function reflectPushButtonState() {
+            if (!btnPush) return;
+
+            if (!("Notification" in window)) {
+                btnPush.disabled = true;
+                btnPush.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Not Supported';
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                btnPush.classList.remove("btn-outline-danger");
+                btnPush.classList.add("btn-success");
+                btnPush.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Device Popups Active';
+            } else if (Notification.permission === "denied") {
+                btnPush.classList.remove("btn-outline-danger");
+                btnPush.classList.add("btn-secondary");
+                btnPush.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> Popups Blocked';
+            } else {
+                btnPush.classList.remove("btn-success", "btn-secondary");
+                btnPush.classList.add("btn-outline-danger");
+                btnPush.innerHTML = '<i class="bi bi-bell-plus-fill me-1"></i> Enable Device Popups';
+            }
         }
+
+        reflectPushButtonState();
+
+if (btnPush) {
+    btnPush.addEventListener('click', function () {
+        if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+            alert("This browser does not support device notifications.");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            // Browsers never let JavaScript revoke a permission it already
+            // granted — only the browser's own site settings can do that.
+            // Re-calling requestPermission() here would just silently
+            // re-resolve as "granted" again, which is why it looked stuck.
+            alert("Device popups are already enabled. To turn them off, use your browser's site settings (tap the icon next to the address bar) and disable Notifications for this site.");
+            return;
+        }
+
+        if (Notification.permission === "denied") {
+            alert("Notifications are blocked for this site. Please enable them from your browser's site settings.");
+            return;
+        }
+
+        Notification.requestPermission().then(function (permission) {
+            if (permission === "granted") {
+                navigator.serviceWorker.ready.then(function (registration) {
+                    registration.showNotification("TCMIT Canteen Portal", {
+                        body: "Device notifications enabled! You will now receive order alerts even when the browser is closed.",
+                        icon: "/images/canteen-icon.png"
+                    });
+                });
+            }
+
+            reflectPushButtonState();
+        });
+    });
+}
     </script>
 }

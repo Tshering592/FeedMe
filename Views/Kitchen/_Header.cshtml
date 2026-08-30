@@ -1,21 +1,33 @@
-﻿<!-- Views/Kitchen/_Header.cshtml -->
+﻿<style>
+    @@media (max-width: 576px) {
+        #kitchenNotificationDropdown + .dropdown-menu {
+            position: fixed !important;
+            inset: auto 0.75rem auto 0.75rem !important;
+            top: 60px !important;
+            width: auto !important;
+            max-width: none !important;
+        }
+    }
+</style>
+
+<!-- Views/Kitchen/_Header.cshtml -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/Kitchen/Dashboard">
+    <div class="container-fluid flex-nowrap">
+        <a class="navbar-brand fw-bold text-truncate" href="/Kitchen/Dashboard" style="max-width: 55vw;">
             <i class="bi bi-egg-fried me-2"></i>Kitchen Portal
         </a>
 
-        <div class="d-flex align-items-center ms-auto">
+        <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 ms-auto">
             <!-- Notification Bell Dropdown -->
             <div class="dropdown me-3">
-                <a class="nav-link dropdown-toggle text-white position-relative" href="#" id="kitchenNotificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle text-white position-relative" href="#" id="kitchenNotificationDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                     <i class="bi bi-bell-fill fs-5"></i>
                     <span id="kitchenNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
                         0
                     </span>
                 </a>
 
-                <ul class="dropdown-menu dropdown-menu-end shadow p-2" aria-labelledby="kitchenNotificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                <ul class="dropdown-menu dropdown-menu-end shadow p-2" aria-labelledby="kitchenNotificationDropdown" style="width: 320px; max-width: calc(100vw - 2rem); max-height: 400px; overflow-y: auto; overflow-x: hidden;">
                     <li class="dropdown-header d-flex justify-content-between align-items-center fw-bold border-bottom pb-2">
                         <span>New Orders</span>
                         <a href="/Kitchen/Notifications" class="text-decoration-none small">View All</a>
@@ -30,8 +42,8 @@
             @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
             <!-- Profile & Logout -->
-            <span class="text-white-50 small me-3">Kitchen Staff</span>
-            <a href="/Kitchen/Profile" class="btn btn-outline-light btn-sm rounded-pill px-3 me-2">
+            <span class="text-white-50 small d-none d-sm-inline">Kitchen Staff</span>
+            <a href="/Kitchen/Profile" class="btn btn-outline-light btn-sm rounded-pill px-3">
                 <i class="bi bi-person-circle me-1"></i> Profile
             </a>
 

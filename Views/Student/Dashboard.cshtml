@@ -16,7 +16,7 @@
     }
 
     html, body {
-        background-color: var(--fm-cream) !important;
+        background-color: #f8fafc !important;
         margin: 0 !important;
         padding: 0 !important;
         height: 100%;
@@ -26,38 +26,13 @@
     .admin-sidebar {
         width: 250px;
         height: 100vh;
+        height: 100dvh;
         position: fixed;
         top: 0;
         left: 0;
-        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 50%, #2a221b 0%, #17110d 70%, #0a0705 100%);
-        border-right: 1px solid #3d2e24;
+        background-color: #0f172a;
         z-index: 1000;
         overflow-y: auto;
-    }
-
-    /* Force all sidebar nav links to white */
-    .admin-sidebar .nav-link {
-        color: rgba(255, 255, 255, 0.85) !important;
-        font-family: var(--fm-font-body);
-        font-weight: 500;
-    }
-
-    .admin-sidebar .nav-link:hover {
-        color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-    }
-
-    .admin-sidebar .nav-link.active,
-    .admin-sidebar .nav-link.bg-danger {
-        color: #ffffff !important;
-        font-weight: 700;
-    }
-
-    /* Welcome banner text — pure white */
-    .welcome-banner h2,
-    .welcome-banner p {
-        color: #ffffff !important;
     }
 
     /* Fixed-pane pattern line up consistently across portals */
@@ -70,7 +45,7 @@
         overflow-y: auto;
         padding: 24px 32px;
         box-sizing: border-box;
-        background-color: var(--fm-cream);
+        background-color: #f8fafc;
     }
 
     .full-width-card {
@@ -78,38 +53,88 @@
         max-width: 100%;
     }
 
-    /* Responsive: collapse sidebar to a slim top strip on narrow screens */
+    /* Slim top bar shown only on mobile, with a hamburger button to open the drawer */
+    .mobile-topbar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background-color: #0f172a;
+        z-index: 1030;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+    }
+
+    .mobile-nav-toggle {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 4px;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+    }
+
+        .sidebar-backdrop.show {
+            display: block;
+        }
+
+    /* Responsive: sidebar becomes a sliding off-canvas drawer instead of squeezing content */
     @@media (max-width: 900px) {
+        .mobile-topbar {
+            display: flex;
+        }
+
         .admin-sidebar {
-            width: 100%;
-            height: auto;
+            width: 260px;
+            height: 100vh;
+            height: 100dvh;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            flex-direction: row !important;
-            align-items: center;
-            padding: 10px 16px !important;
-            overflow-x: auto;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1050;
+            flex-direction: column !important;
+            padding: 16px !important;
+            overflow-y: auto;
         }
 
-            .admin-sidebar .nav {
-                flex-direction: row !important;
-                gap: 6px !important;
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
             }
 
-            .admin-sidebar .border-top,
-            .admin-sidebar .border-bottom {
-                border: none !important;
+            .admin-sidebar .nav {
+                flex-direction: column !important;
+                gap: 8px !important;
             }
 
         .admin-main-content {
             left: 0;
-            top: 64px;
+            top: 56px;
             padding: 16px 20px;
         }
     }
 </style>
+
+<!-- MOBILE TOP BAR (hamburger + brand) -->
+<div class="mobile-topbar">
+    <button type="button" class="mobile-nav-toggle" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+    </button>
+    <span class="fw-bold text-white">TCMIT CANTEEN</span>
+</div>
+<div class="sidebar-backdrop"></div>
 
 <div class="d-flex">
 
@@ -118,12 +143,12 @@
         <div>
             <!-- Top Branding & User Info -->
             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
-                <div class="d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="width: 38px; height: 38px; min-width: 38px; border-radius: 50%; background: var(--fm-coral); box-shadow: 0 2px 8px rgba(228,71,47,0.45);">
-                    <i class="bi bi-cup-hot-fill text-white" style="font-size: 1.1rem;"></i>
+                <div class="bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; min-width: 42px;">
+                    <i class="bi bi-cup-hot-fill text-white fs-5"></i>
                 </div>
                 <div class="text-truncate">
-                    <div class="fw-bold text-white text-truncate" style="font-family: var(--fm-font-display); font-size: 0.95rem; line-height: 1.1;">TCMIT Canteen</div>
-                    <div style="font-family: var(--fm-font-body); font-size: 0.7rem; font-weight: 600; color: var(--fm-coral); letter-spacing: 0.08em; text-transform: uppercase;">Student Portal</div>
+                    <h6 class="fw-bold m-0 text-white text-truncate" style="font-size: 0.95rem;">TCMIT CANTEEN</h6>
+                    <span class="text-danger small fw-semibold" style="font-size: 0.75rem;">Student Portal</span>
                 </div>
             </div>
 
@@ -184,19 +209,15 @@
     <div class="admin-main-content">
 
         <!-- Welcome Banner with Circular Notification Bell -->
-        <div class="card border-0 rounded-4 p-4 mb-4 full-width-card welcome-banner" style="background: linear-gradient(135deg, #3d2a20 0%, #2a1e16 50%, #1a1108 100%); border: 1px solid #5a3d2b !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+        <div class="card border-0 shadow-sm rounded-4 text-white p-4 mb-4 full-width-card" style="background-color: #1e293b !important;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 style="font-family: var(--fm-font-display); font-weight: 800; font-size: 1.65rem; color: #ffffff !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin: 0; letter-spacing: 0.2px;">
-                        Welcome back, @(user?.FullName ?? "Student")! 👋
-                    </h2>
-                    <p style="color: #ffffff !important; font-family: var(--fm-font-body); font-size: 0.92rem; margin: 6px 0 0 0; opacity: 0.85;">
-                        Browse today's specials preview below or check order status.
-                    </p>
+                    <h2 class="fw-bold text-white m-0">Welcome back, @(user?.FullName ?? "Student")! 👋</h2>
+                    <p class="text-white-50 small mt-1 mb-0">Browse today's specials preview below or check order status.</p>
                 </div>
 
                 <!-- Circular Glassmorphism Notification Bell Icon Button -->
-                <button type="button" class="btn text-white rounded-circle d-flex align-items-center justify-content-center position-relative border-0" style="width: 44px; height: 44px; min-width: 44px; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px);" data-bs-toggle="modal" data-bs-target="#notificationModal" title="View Notifications">
+                <button type="button" class="btn bg-white bg-opacity-20 text-white rounded-circle d-flex align-items-center justify-content-center position-relative border-0 shadow-sm" style="width: 44px; height: 44px; min-width: 44px;" data-bs-toggle="modal" data-bs-target="#notificationModal" title="View Notifications">
                     <i class="bi bi-bell-fill fs-5"></i>
                     @if (notifications.Any(n => !n.IsRead))
                     {

@@ -89,8 +89,8 @@
             }
 
         .admin-main-content {
-            left:0;
-            right:0;
+            left: 0;
+            right: 0;
             top: 64px;
             padding: 16px 20px;
         }
@@ -235,7 +235,8 @@
                                 <th class="py-3">Token Balance</th>
                                 <th class="py-3">Contact No</th>
                                 <th class="py-3">Dietary Pref</th>
-                                <th class="pe-4 py-3 text-end">Registered On</th>
+                                <th class="py-3 text-end">Registered On</th>
+                                <th class="pe-4 py-3 text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -272,8 +273,25 @@
                                             @(item.User.DietaryPreference ?? "ALL")
                                         </span>
                                     </td>
-                                    <td class="pe-4 py-3 small text-muted text-end">
+                                    <td class="py-3 small text-muted text-end">
                                         @item.User.CreatedAt.ToString("yyyy-MM-dd")
+                                    </td>
+                                    <td class="pe-4 py-3 text-end">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <a asp-action="EditUser" asp-route-id="@item.User.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </a>
+                                            @if (item.Role != "Admin")
+                                            {
+                                                <form asp-action="DeleteUser" asp-route-id="@item.User.Id" method="post"
+                                                      onsubmit="return confirm('Delete this user? This action cannot be undone.');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                        <i class="bi bi-trash3"></i> Delete
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }

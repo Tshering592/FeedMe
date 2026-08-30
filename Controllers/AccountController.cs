@@ -48,10 +48,13 @@ namespace FeedMe.Controllers
 
             if (user != null && !string.IsNullOrEmpty(user.UserName))
             {
+                // Always persist the session (long-lived cookie) so users stay logged in
+                // across browser restarts until they explicitly log out or go inactive
+                // for the ExpireTimeSpan window configured in Program.cs.
                 var result = await _signInManager.PasswordSignInAsync(
                     user.UserName,
                     model.Password,
-                    model.RememberMe,
+                    isPersistent: true,
                     lockoutOnFailure: false);
 
                 if (result.Succeeded)
@@ -121,7 +124,7 @@ namespace FeedMe.Controllers
                         }
 
                         await _userManager.AddToRoleAsync(user, userRole);
-                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        await _signInManager.SignInAsync(user, isPersistent: true);
 
                         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         {
@@ -172,7 +175,7 @@ namespace FeedMe.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true);
             if (result.Succeeded)
             {
                 var existingUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
@@ -212,7 +215,7 @@ namespace FeedMe.Controllers
                     }
 
                     await _userManager.AddLoginAsync(user, info);
-                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    await _signInManager.SignInAsync(user, isPersistent: true);
 
                     return await RedirectUserByRoleAsync(user);
                 }

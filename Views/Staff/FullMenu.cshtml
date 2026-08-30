@@ -49,7 +49,87 @@
         color: #ffffff !important;
         font-weight: 700 !important;
     }
+
+    @@media (max-width: 900px) {
+        .mobile-topbar {
+            display: flex !important;
+        }
+
+        .staff-sidebar {
+            width: 260px !important;
+            height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1050;
+            flex-direction: column !important;
+            padding: 16px !important;
+            overflow-y: auto !important;
+        }
+
+            .staff-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .staff-sidebar .nav {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+        .staff-main-content {
+            left: 0 !important;
+            top: 56px !important;
+            padding: 16px 20px !important;
+        }
+    }
+
+    /* Slim top bar shown only on mobile, with a hamburger button to open the drawer */
+    .mobile-topbar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background-color: #0f172a;
+        z-index: 1030;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+    }
+
+    .mobile-nav-toggle {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 1.5rem;
+        line-height: 1;
+        padding: 4px;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+    }
+
+        .sidebar-backdrop.show {
+            display: block;
+        }
 </style>
+
+<!-- MOBILE TOP BAR (hamburger + brand) -->
+<div class="mobile-topbar">
+    <button type="button" class="mobile-nav-toggle" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+    </button>
+    <span class="fw-bold text-white">TCMIT CANTEEN</span>
+</div>
+<div class="sidebar-backdrop"></div>
 
 <div class="d-flex">
     <!-- SIDEBAR -->
@@ -253,12 +333,12 @@
 
 <!-- CATEGORY FILTER SCRIPT -->
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const categoryBtns = document.querySelectorAll(".category-btn");
         const menuRows = document.querySelectorAll(".menu-item-row");
 
         categoryBtns.forEach(btn => {
-            btn.addEventListener("click", function() {
+            btn.addEventListener("click", function () {
                 categoryBtns.forEach(b => {
                     b.classList.remove("btn-primary", "active", "text-white");
                     b.classList.add("btn-light", "text-muted");

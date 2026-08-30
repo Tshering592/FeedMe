@@ -825,5 +825,112 @@ namespace FeedMe.Controllers
 
             return View(userViewModels);
         }
+
+        // 20. GET: /Admin/EditUser/{id}
+        [HttpGet]
+        public async Task<IActionResult> EditUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var viewModel = new EditUserViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                ContactNumber = user.ContactNumber ?? user.PhoneNumber,
+                DietaryPreference = user.DietaryPreference,
+                Role = roles.FirstOrDefault() ?? "Student"
+            };
+
+            return View(viewModel);
+        }
+
+        // 21. POST: /Admin/EditUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditUser(EditUserViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            user.FullName = model.FullName;
+            user.ContactNumber = model.ContactNumber;
+            user.DietaryPreference = model.DietaryPreference;
+
+            if (!string.Equals(user.Email, model.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                await _userManager.SetEmailAsync(user, model.Email);
+                await _userManager.SetUserNameAsync(user, model.Email);
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                TempData["Success"] = $"{user.FullName ?? user.Email} was updated successfully.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
+        // 22. POST: /Admin/DeleteUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                TempData["Error"] = "User not found.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
+            {
+                TempData["Error"] = "Admin accounts cannot be deleted from here.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser != null && currentUser.Id == user.Id)
+            {
+                TempData["Error"] = "You cannot delete your own account.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+
+            if (result.Succeeded)
+            {
+                TempData["Success"] = $"{user.FullName ?? user.Email} was deleted successfully.";
+            }
+            else
+            {
+                TempData["Error"] = "Unable to delete user. They may have existing orders linked to their account.";
+            }
+
+            return RedirectToAction(nameof(Users));
+        }
     }
 }
