@@ -11,6 +11,7 @@
 </style>
 
 <!-- Views/Kitchen/_Header.cshtml -->
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 mb-4">
     <div class="container-fluid flex-nowrap">
         <a class="navbar-brand fw-bold text-truncate" href="/Kitchen/Dashboard" style="max-width: 55vw;">
@@ -48,6 +49,7 @@
             </a>
 
             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-link nav-link border-0 align-middle d-inline p-0 text-white-50">
                     Logout
                 </button>

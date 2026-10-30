@@ -28,6 +28,7 @@ namespace FeedMe.Controllers
         private readonly IHubContext<OrderHub> _hubContext;
         private readonly UserManager<AppUser> _userManager;
         private readonly IOrderService _orderService;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<AdminController> _logger;
 
         public AdminController(
@@ -36,6 +37,7 @@ namespace FeedMe.Controllers
             IHubContext<OrderHub> hubContext,
             UserManager<AppUser> userManager,
             IOrderService orderService,
+            INotificationService notificationService,
             ILogger<AdminController> logger)
         {
             _context = context;
@@ -43,6 +45,7 @@ namespace FeedMe.Controllers
             _hubContext = hubContext;
             _userManager = userManager;
             _orderService = orderService;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -53,17 +56,14 @@ namespace FeedMe.Controllers
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
 
-            // Calculate date range for current week (Sunday - Saturday)
             var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
             var endOfWeek = startOfWeek.AddDays(7);
 
-            // Fetch order timestamps for the current week
             var weeklyOrderDays = await _context.Orders
                 .Where(o => o.OrderTime >= startOfWeek && o.OrderTime < endOfWeek)
                 .Select(o => o.OrderTime.DayOfWeek)
                 .ToListAsync();
 
-            // Populate array with order frequencies per day of week
             var weeklyCounts = new int[7];
             foreach (var day in weeklyOrderDays)
             {
@@ -455,31 +455,20 @@ namespace FeedMe.Controllers
                     await _hubContext.Clients.User(targetUserId).SendAsync("ReceiveOrderStatusUpdate", notificationData);
                     await _hubContext.Clients.Group($"order_{order.Id}").SendAsync("ReceiveOrderStatusUpdate", notificationData);
 
-                    // Only create the generic DB notification here for NON-cancellation updates.
+                    // Only create the generic notification here for NON-cancellation updates.
                     // Cancellations already had their notification (with refund confirmation) created
                     // by OrderService.AdminCancelOrderAsync above - creating a second one here would
-                    // duplicate it.
+                    // duplicate it. Routed through NotificationService (rather than writing directly
+                    // to _context.Notifications) so this also triggers a OneSignal push, the same as
+                    // every other notification path in the app.
                     if (order.Status != OrderStatus.Cancelled)
                     {
-                        try
-                        {
-                            var dbNotification = new Notification
-                            {
-                                UserId = targetUserId,
-                                Title = $"Order #{order.Id:D3} - {order.Status}",
-                                Message = messageToSend,
-                                CreatedAt = DateTime.Now,
-                                IsRead = false
-                            };
-                            _context.Notifications.Add(dbNotification);
-                            await _context.SaveChangesAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            // Log rather than silently ignoring - schema mismatches or FK issues
-                            // should be visible, not hidden.
-                            _logger.LogError(ex, "Failed to create DB notification for Order #{OrderId}.", order.Id);
-                        }
+                        await _notificationService.CreateNotificationAsync(
+                            targetUserId,
+                            messageToSend,
+                            "OrderUpdate",
+                            order.Id,
+                            $"Order #{order.Id:D3} - {order.Status}");
                     }
                 }
 
@@ -797,13 +786,22 @@ namespace FeedMe.Controllers
 
         // 19. GET: /Admin/Users
         [HttpGet]
-        public async Task<IActionResult> Users(string? roleFilter)
+        // AFTER
+        public async Task<IActionResult> Users(string? roleFilter, string? search)
         {
             var adminUser = await _userManager.GetUserAsync(User);
             ViewBag.AdminTokenBalance = adminUser?.TokenBalance ?? 0m;
             ViewBag.CurrentFilter = roleFilter;
+            ViewBag.CurrentSearch = search;
 
-            var userList = await _userManager.Users.ToListAsync();
+            var usersQuery = _userManager.Users.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                usersQuery = usersQuery.Where(u => u.FullName != null && u.FullName.Contains(term));
+            }
+
+            var userList = await usersQuery.ToListAsync();
             var userViewModels = new List<UserWithRoleViewModel>();
 
             foreach (var user in userList)
@@ -919,15 +917,44 @@ namespace FeedMe.Controllers
                 return RedirectToAction(nameof(Users));
             }
 
-            var result = await _userManager.DeleteAsync(user);
+            var displayName = user.FullName ?? user.Email;
+            var strategy = _context.Database.CreateExecutionStrategy();
+            string? errorMessage = null;
 
-            if (result.Succeeded)
+            try
             {
-                TempData["Success"] = $"{user.FullName ?? user.Email} was deleted successfully.";
+                await strategy.ExecuteAsync(async () =>
+                {
+                    errorMessage = null; // reset in case the strategy retries
+
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                    // Keep every order; just detach it from the account being deleted.
+                    await _context.Orders
+                        .Where(o => o.StudentId == user.Id)
+                        .ExecuteUpdateAsync(s => s.SetProperty(o => o.StudentId, (string?)null));
+
+                    var result = await _userManager.DeleteAsync(user);
+
+                    if (!result.Succeeded)
+                    {
+                        await transaction.RollbackAsync();
+                        errorMessage = "Unable to delete user: " +
+                            string.Join(", ", result.Errors.Select(e => e.Description));
+                        return;
+                    }
+
+                    await transaction.CommitAsync();
+                });
+
+                if (errorMessage == null)
+                    TempData["Success"] = $"{displayName} was deleted successfully.";
+                else
+                    TempData["Error"] = errorMessage;
             }
-            else
+            catch (DbUpdateException)
             {
-                TempData["Error"] = "Unable to delete user. They may have existing orders linked to their account.";
+                TempData["Error"] = "Unable to delete user because other records still depend on this account.";
             }
 
             return RedirectToAction(nameof(Users));

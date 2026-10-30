@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "User Directory - Admin";
     string currentFilter = ViewBag.CurrentFilter as string ?? "";
+    string currentSearch = ViewBag.CurrentSearch as string ?? "";
+
 }
 
 <!-- BREAK OUT OF DEFAULT TEMPLATE CONTAINER & ANCHOR EDGE-TO-EDGE -->
@@ -199,18 +201,40 @@
             </div>
         }
 
-        <!-- Role Category Filter Buttons -->
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            <a asp-action="Users" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(string.IsNullOrEmpty(currentFilter) ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
-                <i class="bi bi-people me-1"></i> All Users
-            </a>
-            <a asp-action="Users" asp-route-roleFilter="Student" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(currentFilter == "Student" ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
-                <i class="bi bi-mortarboard me-1"></i> Students Only
-            </a>
-            <a asp-action="Users" asp-route-roleFilter="Staff" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(currentFilter == "Staff" ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
-                <i class="bi bi-person-badge me-1"></i> Staff Only
-            </a>
+<!-- Role Category Filter Buttons + Search -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Users" asp-route-search="@currentSearch" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(string.IsNullOrEmpty(currentFilter) ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
+            <i class="bi bi-people me-1"></i> All Users
+        </a>
+        <a asp-action="Users" asp-route-roleFilter="Student" asp-route-search="@currentSearch" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(currentFilter == "Student" ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
+            <i class="bi bi-mortarboard me-1"></i> Students Only
+        </a>
+        <a asp-action="Users" asp-route-roleFilter="Staff" asp-route-search="@currentSearch" class="btn btn-sm rounded-pill px-4 py-2 fw-bold @(currentFilter == "Staff" ? "btn-danger shadow-sm" : "btn-outline-secondary bg-white")">
+            <i class="bi bi-person-badge me-1"></i> Staff Only
+        </a>
+    </div>
+
+    <!-- Search by name -->
+    <form asp-action="Users" method="get" class="m-0" style="min-width: 300px;">
+        @if (!string.IsNullOrEmpty(currentFilter))
+        {
+            <input type="hidden" name="roleFilter" value="@currentFilter" />
+        }
+        <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden bg-white">
+            <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="search" value="@currentSearch" class="form-control border-0 shadow-none py-2"
+                   placeholder="Search by name..." autocomplete="off" />
+            @if (!string.IsNullOrEmpty(currentSearch))
+            {
+                <a asp-action="Users" asp-route-roleFilter="@currentFilter" class="btn btn-white border-0 text-muted" title="Clear search">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            }
+            <button type="submit" class="btn btn-danger fw-bold px-3">Search</button>
         </div>
+    </form>
+</div>
 
         <!-- Full-Width Directory Table Card -->
         <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden w-100 mb-4">
@@ -219,7 +243,16 @@
                 <div class="p-5 text-center">
                     <i class="bi bi-person-x fs-1 text-muted d-block mb-2"></i>
                     <h6 class="fw-bold text-dark m-0">No accounts found</h6>
-                    <p class="text-muted small mt-1 mb-0">There are no user accounts registered under the "@(string.IsNullOrEmpty(currentFilter) ? "All Users" : currentFilter)" filter.</p>
+                    <p class="text-muted small mt-1 mb-0">
+                        @if (!string.IsNullOrEmpty(currentSearch))
+                        {
+                            <text>No accounts match "@currentSearch" under the "@(string.IsNullOrEmpty(currentFilter) ? "All Users" : currentFilter)" filter.</text>
+                        }
+                        else
+                        {
+                            <text>There are no user accounts registered under the "@(string.IsNullOrEmpty(currentFilter) ? "All Users" : currentFilter)" filter.</text>
+                        }
+                    </p>                
                 </div>
             }
             else
