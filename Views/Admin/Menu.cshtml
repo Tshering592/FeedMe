@@ -165,10 +165,25 @@
                 }
                 else
                 {
-                    <div class="table-responsive">
+                    <!-- Search + Select toggle -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                        <div class="position-relative flex-grow-1">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" id="pullSearchInput" class="form-control rounded-pill ps-5"
+                                   placeholder="Search inventory items..." autocomplete="off" />
+                        </div>
+                        <button type="button" id="btnSelectMode" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+                            <i class="bi bi-check2-square me-1"></i> Select
+                        </button>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 55vh; overflow-y: auto;">
                         <table class="table align-middle mb-0">
-                            <thead class="bg-light text-uppercase text-muted small">
+                            <thead class="bg-light text-uppercase text-muted small sticky-top">
                                 <tr>
+                                    <th class="select-col ps-3 d-none" style="width: 40px;">
+                                        <input type="checkbox" id="chkSelectAll" class="form-check-input" title="Select all shown" />
+                                    </th>
                                     <th class="ps-3">Product</th>
                                     <th>Category</th>
                                     <th>Price</th>
@@ -178,11 +193,26 @@
                             <tbody>
                                 @foreach (var item in unpublishedItems)
                                 {
-                                    <tr>
+                                    <tr class="pull-row" data-name="@item.Name.ToLower()">
+                                        <td class="select-col ps-3 d-none">
+                                            <input type="checkbox" name="selectedIds" value="@item.Id"
+                                                   form="bulkPublishForm" class="form-check-input bulk-check" />
+                                        </td>
                                         <td class="ps-3">
                                             <div class="d-flex align-items-center gap-2">
-                                                <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "/images/placeholder.png" : item.ImageUrl)"
-                                                     class="rounded-3" style="width: 40px; height: 40px; object-fit: cover;" />
+                                                @if (string.IsNullOrEmpty(item.ImageUrl))
+                                                {
+                                                    <div class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
+                                                         style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-image"></i>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <img src="@item.ImageUrl" class="rounded-3"
+                                                         style="width: 40px; height: 40px; object-fit: cover;"
+                                                         onerror="this.style.visibility='hidden'" />
+                                                }
                                                 <strong class="text-dark">@item.Name</strong>
                                             </div>
                                         </td>
@@ -191,7 +221,7 @@
                                             <i class="bi bi-coin text-warning"></i> @item.Price.ToString("N0") Tokens
                                         </td>
                                         <td class="text-end pe-3">
-                                            <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="d-inline single-publish">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="returnUrl" value="@Url.Action("Menu")" />
                                                 <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
@@ -201,11 +231,30 @@
                                         </td>
                                     </tr>
                                 }
+                                <tr id="pullNoResults" class="d-none">
+                                    <td colspan="5" class="text-center text-muted py-4">No items match your search.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 }
             </div>
+
+            @if (unpublishedItems.Any())
+            {
+                <!-- Bulk publish bar (shown only when items are ticked) -->
+                <div id="bulkBar" class="modal-footer border-top d-none justify-content-between">
+                    <span class="text-muted small"><strong id="selectedCount">0</strong> selected</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnClearSel" class="btn btn-light rounded-pill px-3">Clear</button>
+                        <form id="bulkPublishForm" asp-action="PublishMultiple" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
+                                <i class="bi bi-cloud-upload me-1"></i> Publish Selected
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -254,6 +303,92 @@
                     activeCategory = this.getAttribute("data-category");
                     filterMenu();
                 });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEl = document.getElementById("pullInventoryModal");
+            const searchInput = document.getElementById("pullSearchInput");
+            if (!modalEl || !searchInput) return;
+
+            const btnSelectMode = document.getElementById("btnSelectMode");
+            const btnClear = document.getElementById("btnClearSel");
+            const chkAll = document.getElementById("chkSelectAll");
+            const bulkBar = document.getElementById("bulkBar");
+            const countEl = document.getElementById("selectedCount");
+            const noResults = document.getElementById("pullNoResults");
+            const rows = modalEl.querySelectorAll(".pull-row");
+            const checks = modalEl.querySelectorAll(".bulk-check");
+            const selectCols = modalEl.querySelectorAll(".select-col");
+            const singleForms = modalEl.querySelectorAll(".single-publish");
+
+            let selectMode = false;
+
+            function visibleRows() {
+                return Array.from(rows).filter(r => r.style.display !== "none");
+            }
+
+            function updateBar() {
+                const n = Array.from(checks).filter(c => c.checked).length;
+                countEl.textContent = n;
+                bulkBar.classList.toggle("d-none", !(selectMode && n > 0));
+                bulkBar.classList.toggle("d-flex", selectMode && n > 0);
+
+                const vis = visibleRows();
+                chkAll.checked = vis.length > 0 &&
+                    vis.every(r => r.querySelector(".bulk-check").checked);
+            }
+
+            function filterRows() {
+                const q = searchInput.value.toLowerCase().trim();
+                let shown = 0;
+                rows.forEach(r => {
+                    const match = (r.dataset.name || "").includes(q);
+                    r.style.display = match ? "" : "none";
+                    if (match) shown++;
+                });
+                noResults.classList.toggle("d-none", shown > 0);
+                updateBar();
+            }
+
+            function setSelectMode(on) {
+                selectMode = on;
+                selectCols.forEach(c => c.classList.toggle("d-none", !on));
+                singleForms.forEach(f => f.classList.toggle("d-none", on));
+                btnSelectMode.classList.toggle("btn-primary", on);
+                btnSelectMode.classList.toggle("btn-outline-primary", !on);
+                btnSelectMode.innerHTML = on
+                    ? '<i class="bi bi-x-lg me-1"></i> Cancel'
+                    : '<i class="bi bi-check2-square me-1"></i> Select';
+                if (!on) checks.forEach(c => c.checked = false);
+                updateBar();
+            }
+
+            searchInput.addEventListener("input", filterRows);
+            btnSelectMode.addEventListener("click", () => setSelectMode(!selectMode));
+            btnClear.addEventListener("click", () => { checks.forEach(c => c.checked = false); updateBar(); });
+            checks.forEach(c => c.addEventListener("change", updateBar));
+
+            // "Select all" only ticks the rows currently shown by the search
+            chkAll.addEventListener("change", function () {
+                visibleRows().forEach(r => r.querySelector(".bulk-check").checked = chkAll.checked);
+                updateBar();
+            });
+
+            // In select mode, clicking anywhere on a row toggles its checkbox
+            rows.forEach(r => r.addEventListener("click", function (e) {
+                if (!selectMode || e.target.closest("button, a")) return;
+                const cb = r.querySelector(".bulk-check");
+                if (e.target !== cb) cb.checked = !cb.checked;
+                updateBar();
+            }));
+
+            modalEl.addEventListener("shown.bs.modal", () => searchInput.focus());
+            modalEl.addEventListener("hidden.bs.modal", function () {
+                searchInput.value = "";
+                filterRows();
+                setSelectMode(false);
             });
         });
     </script>

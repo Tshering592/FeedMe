@@ -287,7 +287,7 @@ namespace FeedMe.Controllers
             return View("EditMenuItem", model);
         }
 
-        // 8. POST: /Admin/TogglePublish/5
+        // 8a. POST: /Admin/TogglePublish/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TogglePublish(int id, string? returnUrl = null)
@@ -312,6 +312,32 @@ namespace FeedMe.Controllers
             }
 
             return RedirectToAction(nameof(Inventory));
+        }
+
+        // 8b. POST: /Admin/PublishMultiple
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PublishMultiple(List<int> selectedIds)
+        {
+            if (selectedIds != null && selectedIds.Any())
+            {
+                var items = await _context.MenuItems
+                    .Where(m => selectedIds.Contains(m.Id) && !m.IsPublished)
+                    .ToListAsync();
+
+                foreach (var item in items)
+                {
+                    item.IsPublished = true;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = items.Count == 1
+                    ? $"{items[0].Name} published to live menu."
+                    : $"{items.Count} items published to live menu.";
+            }
+
+            return RedirectToAction(nameof(Menu));
         }
 
         // 9. GET: /Admin/Menu
